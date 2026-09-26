@@ -289,15 +289,16 @@
     border:1px solid rgba(159,184,200,0.15);
     border-radius:var(--radius);
     padding:12px 14px;
-    min-width:100px;
+    min-width:110px;
     flex-shrink:0;
     transition:all 0.2s ease;
     box-shadow:var(--shadow-sm);
   }
   .tide-chip:hover{border-color:var(--brass-bright); background:rgba(159,184,200,0.12); box-shadow:var(--shadow-md);}
   .tide-chip .kind{font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--brass-bright); font-weight:700;}
-  .tide-chip .time{font-family:'IBM Plex Mono',monospace; font-size:14px; margin-top:3px; font-weight:600;}
-  .tide-chip .ht{font-size:11px; color:var(--fog-dim); margin-top:2px;}
+  .tide-chip .time{font-family:'IBM Plex Mono',monospace; font-size:14px; margin-top:6px; font-weight:600;}
+  .tide-chip .ht{font-size:11px; color:var(--fog-dim); margin-top:6px;}
+  .tide-chip .info-label{font-size:8px; color:var(--fog-dim); text-transform:uppercase; letter-spacing:0.06em; margin-top:2px;}
 
   .section-title{
     display:flex; align-items:baseline; gap:8px; margin:28px 0 14px;
@@ -562,18 +563,22 @@
         <div style="font-size:13px; color:var(--fog); margin-top:4px;" id="countdownSub" data-info="When & height of next tide">—</div>
         <div class="info-label" style="margin-top:6px;">Time to next tidal change</div>
       </div>
+      <div class="info-label" style="margin-top:12px;">Sea level trend (24 hours)</div>
       <canvas id="plotter"></canvas>
+      <div class="info-label" style="margin-top:8px;">Upcoming high & low tides</div>
       <div class="tide-list" id="tideList"></div>
     </div>
 
     <div class="panel">
-      <div class="panel-label">48-hour wind trend</div>
-      <canvas id="windPlotter"></canvas>
+      <div class="panel-label" data-info="Wind speed forecast next 48 hours">48-hour wind trend</div>
+      <div class="info-label">Shows wind speed changes over time</div>
+      <canvas id="windPlotter" style="margin-top:8px;"></canvas>
     </div>
 
     <div class="panel">
-      <div class="panel-label">48-hour wave height</div>
-      <canvas id="wavePlotter"></canvas>
+      <div class="panel-label" data-info="Wave height forecast next 48 hours">48-hour wave height</div>
+      <div class="info-label">Shows ocean swell conditions over time</div>
+      <canvas id="wavePlotter" style="margin-top:8px;"></canvas>
     </div>
 
     <div style="display:flex; gap:12px; margin:18px 0; flex-wrap:wrap;">
@@ -1057,9 +1062,12 @@ function renderTideChips(){
   if(!upcoming.length){ list.innerHTML = `<div class="tide-chip"><div class="kind">—</div></div>`; return; }
   list.innerHTML = upcoming.map(e=>`
     <div class="tide-chip">
-      <div class="kind">${e.kind}</div>
-      <div class="time mono">${formatWallClock(e.ms,'short')}</div>
-      <div class="ht">${e.height.toFixed(2)} ${state.tideUnit === 'ft' ? 'ft' : 'm'}</div>
+      <div class="kind" data-info="${e.kind === 'high' ? 'Highest water level' : 'Lowest water level'}">${e.kind}</div>
+      <div class="info-label">Tide type</div>
+      <div class="time mono" data-info="When this tide occurs">${formatWallClock(e.ms,'short')}</div>
+      <div class="info-label">Time</div>
+      <div class="ht" data-info="Water level at this tide">${e.height.toFixed(2)} ${state.tideUnit === 'ft' ? 'ft' : 'm'}</div>
+      <div class="info-label">Height</div>
     </div>`).join('');
 }
 
