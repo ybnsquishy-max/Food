@@ -565,8 +565,12 @@
       </div>
       <div class="info-label" style="margin-top:12px;">Sea level trend (24 hours)</div>
       <canvas id="plotter"></canvas>
-      <div style="margin-top:10px; padding:10px 12px; background:rgba(159,184,200,0.05); border-radius:8px; font-size:12px; color:var(--fog);">
-        <strong style="color:var(--white-ish);">📊 Chart explains:</strong> The green line shows water level rise and fall. Higher peaks = high tide, lower valleys = low tide. Left (0h) to right (24h) shows the next 24 hours. Use this to plan when water is highest or lowest at your location.
+      <div style="margin-top:12px; padding:16px; background:linear-gradient(135deg, rgba(63,167,154,0.12), rgba(159,184,200,0.08)); border:1px solid rgba(63,167,154,0.2); border-radius:var(--radius); font-size:13px; color:var(--fog-dim); line-height:1.6;">
+        <div style="color:var(--safe-teal); font-weight:600; margin-bottom:8px;">📊 How to read this chart:</div>
+        <div>🔹 <strong style="color:var(--white-ish);">Green line</strong> = sea level height right now</div>
+        <div>🔹 <strong style="color:var(--white-ish);">Peaks</strong> = high tide (water is highest)</div>
+        <div>🔹 <strong style="color:var(--white-ish);">Valleys</strong> = low tide (water is lowest)</div>
+        <div>🔹 <strong style="color:var(--white-ish);">Timeline</strong> = 0h (now) → 24h (tomorrow same time)</div>
       </div>
       <div class="info-label" style="margin-top:12px;">Upcoming high & low tides</div>
       <div class="tide-list" id="tideList"></div>
@@ -576,8 +580,12 @@
       <div class="panel-label" data-info="Wind speed forecast next 48 hours">48-hour wind trend</div>
       <div class="info-label">Shows wind speed changes over time</div>
       <canvas id="windPlotter" style="margin-top:8px;"></canvas>
-      <div style="margin-top:10px; padding:10px 12px; background:rgba(227,169,79,0.08); border-radius:8px; font-size:12px; color:var(--fog);">
-        <strong style="color:var(--white-ish);">📊 Chart explains:</strong> The gold line shows wind speed (in knots or your chosen unit). Higher line = stronger wind, lower line = calmer. Left (now) to right (48h) shows the next 48 hours. Helpful for planning activities that depend on wind conditions.
+      <div style="margin-top:12px; padding:16px; background:linear-gradient(135deg, rgba(227,169,79,0.12), rgba(159,184,200,0.08)); border:1px solid rgba(227,169,79,0.2); border-radius:var(--radius); font-size:13px; color:var(--fog-dim); line-height:1.6;">
+        <div style="color:var(--brass-bright); font-weight:600; margin-bottom:8px;">📊 How to read this chart:</div>
+        <div>🔹 <strong style="color:var(--white-ish);">Gold line</strong> = wind speed at 10m height</div>
+        <div>🔹 <strong style="color:var(--white-ish);">Higher line</strong> = stronger wind (more kn)</div>
+        <div>🔹 <strong style="color:var(--white-ish);">Lower line</strong> = calmer conditions (less kn)</div>
+        <div>🔹 <strong style="color:var(--white-ish);">Timeline</strong> = now → 48 hours ahead</div>
       </div>
     </div>
 
@@ -585,8 +593,12 @@
       <div class="panel-label" data-info="Wave height forecast next 48 hours">48-hour wave height</div>
       <div class="info-label">Shows ocean swell conditions over time</div>
       <canvas id="wavePlotter" style="margin-top:8px;"></canvas>
-      <div style="margin-top:10px; padding:10px 12px; background:rgba(159,184,200,0.08); border-radius:8px; font-size:12px; color:var(--fog);">
-        <strong style="color:var(--white-ish);">📊 Chart explains:</strong> The light blue line shows wave height in meters. Higher line = bigger waves, lower line = smaller waves. Left (now) to right (48h) shows the next 48 hours. Use this to know if seas will be rough or smooth.
+      <div style="margin-top:12px; padding:16px; background:linear-gradient(135deg, rgba(159,184,200,0.12), rgba(63,167,154,0.08)); border:1px solid rgba(159,184,200,0.2); border-radius:var(--radius); font-size:13px; color:var(--fog-dim); line-height:1.6;">
+        <div style="color:var(--fog); font-weight:600; margin-bottom:8px;">📊 How to read this chart:</div>
+        <div>🔹 <strong style="color:var(--white-ish);">Light blue line</strong> = ocean wave height</div>
+        <div>🔹 <strong style="color:var(--white-ish);">Higher line</strong> = bigger waves (rougher seas)</div>
+        <div>🔹 <strong style="color:var(--white-ish);">Lower line</strong> = smaller waves (calmer seas)</div>
+        <div>🔹 <strong style="color:var(--white-ish);">Timeline</strong> = now → 48 hours ahead</div>
       </div>
     </div>
 
