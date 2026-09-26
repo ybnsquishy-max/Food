@@ -1,6 +1,6 @@
 // Surge service worker
 // BUILD is stamped by deploy workflow — each deploy ships a byte-different sw.js
-// Icon update: 2026-09-26-08-30-00
+// Icon update v2: 2026-09-26-08-45-00
 const BUILD = '__BUILD__';
 const CACHE = 'wind-tide-' + BUILD;
 const FONT_CACHE = 'wind-tide-fonts';

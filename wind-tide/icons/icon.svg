@@ -1,31 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="surge-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#0A2233;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#0F3049;stop-opacity:1" />
-    </linearGradient>
-    <linearGradient id="wave-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#3FA79A;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#63D4C8;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#3FA79A;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" fill="url(#surge-grad)"/>
-
-  <!-- Main surge wave -->
-  <path d="M 80 280 Q 120 200 180 180 T 300 160 T 432 200 L 432 320 Q 380 360 300 350 Q 200 335 100 350 Z"
-        fill="url(#wave-grad)" opacity="0.95"/>
-
-  <!-- Secondary wave layer for depth -->
-  <path d="M 50 340 Q 100 300 160 290 T 280 280 T 460 320 L 460 512 L 50 512 Z"
-        fill="url(#wave-grad)" opacity="0.6"/>
-
-  <!-- Wave crest highlight -->
-  <path d="M 180 175 Q 240 150 300 160 Q 340 165 380 185"
-        stroke="#E3A94F" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.8"/>
-
-  <!-- Foam spray accent -->
-  <circle cx="180" cy="165" r="8" fill="#EDEBDF" opacity="0.9"/>
-  <circle cx="280" cy="145" r="6" fill="#EDEBDF" opacity="0.8"/>
-  <circle cx="380" cy="175" r="7" fill="#EDEBDF" opacity="0.85"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#0A2233"/>
+  <path d="M 20 100 Q 50 70 80 80 T 140 60 T 200 90 L 200 160 Q 150 180 100 170 Q 50 160 20 180 Z" fill="#3FA79A"/>
+  <path d="M 30 130 Q 70 110 110 120 T 180 100" stroke="#E3A94F" stroke-width="4" fill="none" stroke-linecap="round"/>
 </svg>
