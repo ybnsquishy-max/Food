@@ -1,3 +1,7 @@
 # Google App Engine generated folder
 appengine-generated/
+
+# Dependencies
 node_modules/
+package-lock.json
+yarn.lock
