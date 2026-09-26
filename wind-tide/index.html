@@ -398,7 +398,10 @@
     <div class="eyebrow">Wind &amp; Tide Watch</div>
     <h1 class="display">Know before you go.</h1>
   </div>
-  <button class="install-btn" id="installChip" hidden>📲 Install</button>
+  <div style="display:flex; gap:8px;">
+    <button class="install-btn" id="installChip" hidden>📲 Install</button>
+    <button class="install-btn" id="updateBtn" title="Check for app updates">🔄 Check</button>
+  </div>
 </header>
 
 <div style="padding:0 18px;">
@@ -1249,6 +1252,8 @@ document.getElementById('installChip').onclick = async () => {
   refreshInstallUI();
 };
 
+document.getElementById('updateBtn').onclick = () => checkForUpdate();
+
 /* =========================================================
    AUTO-UPDATE (Service Worker)
 ========================================================= */
@@ -1263,6 +1268,32 @@ function applyUpdate(){
   if(!busy){ doReload(); return; }
   pendingReload = true;
   showToast('Update ready — will apply when you finish.', 6000);
+}
+
+async function checkForUpdate(){
+  try {
+    const btn = document.getElementById('updateBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Checking…';
+
+    const response = await fetch('./sw.js?t=' + Date.now());
+    const text = await response.text();
+    const match = text.match(/const BUILD = '([^']+)'/);
+    const remoteBuild = match ? match[1] : null;
+
+    if(!remoteBuild || remoteBuild === APP_VERSION) {
+      showToast('✓ App is up to date');
+    } else {
+      showToast('📦 Update available — reloading…', 2000);
+      setTimeout(() => doReload(), 500);
+    }
+  } catch(e) {
+    showToast('Could not check for updates');
+  } finally {
+    const btn = document.getElementById('updateBtn');
+    btn.disabled = false;
+    btn.textContent = '🔄 Check';
+  }
 }
 
 document.addEventListener('visibilitychange', () => {
