@@ -664,6 +664,16 @@ ol.steps{margin:0;padding-left:20px;font-size:.9rem;display:grid;gap:4px;}
     </section>
 
     <section class="settings-block">
+      <h3>Backup & share</h3>
+      <p class="hint">Download your notes, methods and pantry as a file. Share it with others or restore it on another device.</p>
+      <div class="row">
+        <button class="btn grow" id="exportBtn">Export data</button>
+        <button class="btn ghost grow" id="importBtn">Import data</button>
+      </div>
+      <p class="hint" id="exportStatus" role="status"></p>
+    </section>
+
+    <section class="settings-block">
       <h3>Photo reading</h3>
       <p class="hint">Converting photos to a method uses your own Anthropic API key. It's stored only on this device.</p>
       <label class="field"><span>Anthropic API key</span>
@@ -1157,6 +1167,50 @@ $('#catForm').onsubmit = (e) => {
   $('#newItemName').focus();
   toast(`${name} created. Now add some stock.`);
 };
+
+/* =========================================================
+   SETTINGS: Export/Import
+   ========================================================= */
+$('#exportBtn').onclick = () => {
+  const data = { notes, workflow, pantry, exported: new Date().toISOString() };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `mise-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  $('#exportStatus').textContent = 'Downloaded. Share this file to let others import your data.';
+  setTimeout(() => { $('#exportStatus').textContent = ''; }, 4000);
+};
+
+const importFileInput = document.createElement('input');
+importFileInput.type = 'file';
+importFileInput.accept = '.json';
+importFileInput.onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const data = JSON.parse(evt.target.result);
+      if (!data.notes || !data.workflow || !data.pantry) throw new Error('Invalid backup file');
+      notes = data.notes; save(LS_NOTES, notes);
+      workflow = data.workflow; save(LS_WF, workflow);
+      pantry = data.pantry; save(LS_PANTRY, pantry);
+      renderNotes(); renderWorkflow(); renderPantry();
+      toast(`Restored ${plural(notes.length, 'note')}, method with ${workflow.steps.length} steps, and ${plural(pantry.length, 'section')}`);
+      $('#exportStatus').textContent = 'Data imported successfully!';
+      setTimeout(() => { $('#exportStatus').textContent = ''; }, 3000);
+    } catch (err) {
+      $('#exportStatus').textContent = 'That doesn\'t look like a valid Mise backup file.';
+    }
+  };
+  reader.readAsText(file);
+};
+
+$('#importBtn').onclick = () => importFileInput.click();
 
 /* =========================================================
    SETTINGS: API key
