@@ -328,6 +328,10 @@ main{
   position:absolute;top:10px;left:calc(50% + 8px);min-width:16px;height:16px;border-radius:8px;
   background:var(--danger);color:#fff;font:600 .6rem/16px var(--mono);letter-spacing:0;padding:0 4px;
 }
+@keyframes pulse{
+  0%, 100%{ opacity:1; transform:scale(1); }
+  50%{ opacity:0.8; transform:scale(1.1); }
+}
 .fab{
   position:fixed;z-index:31;
   right:max(16px, calc(50% - 340px + 16px));
@@ -1221,20 +1225,25 @@ function renderShoppingList(){
   const list = $('#shoppingList');
   const empty = $('#shoppingEmpty');
   const badge = $('#tabShop');
+  const shopTab = document.querySelector('[data-tab="shopping"]');
 
   list.innerHTML = '';
+  badge.textContent = needed.length;
+
   if(!needed.length){
     list.hidden = true;
     empty.hidden = false;
-    badge.hidden = true;
+    badge.style.background = 'var(--ink-soft)';
+    shopTab.style.opacity = '0.6';
     $('#statNeeds').textContent = '0';
     return;
   }
 
   list.hidden = false;
   empty.hidden = true;
-  badge.textContent = needed.length;
-  badge.hidden = false;
+  badge.style.background = 'var(--danger)';
+  shopTab.style.opacity = '1';
+  shopTab.style.animation = 'pulse 2s infinite';
   $('#statNeeds').textContent = needed.length;
 
   const byCategory = {};
