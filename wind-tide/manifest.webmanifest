@@ -1,6 +1,6 @@
 {
-  "name": "Wind & Tide Watch",
-  "short_name": "Wind Tide",
+  "name": "Surge",
+  "short_name": "Surge",
   "description": "Live wind and tide forecasts with alarms for any coastline. Know before you go.",
   "id": "./",
   "start_url": "./",

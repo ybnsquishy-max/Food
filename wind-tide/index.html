@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
-<title>Wind & Tide Watch</title>
+<title>Surge</title>
 <meta name="description" content="Live wind and tide forecasts with alarms for any coastline. Know before you go.">
 <meta name="theme-color" content="#0A2233" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A2233" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Wind Tide">
+<meta name="apple-mobile-web-app-title" content="Surge">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='10' r='6' fill='%23E3A94F'/><path d='M8 18 Q16 14 24 18' stroke='%23EDEBDF' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -395,7 +395,7 @@
 
 <header>
   <div class="header-left">
-    <div class="eyebrow">Wind &amp; Tide Watch</div>
+    <div class="eyebrow">⚓ Surge</div>
     <h1 class="display">Know before you go.</h1>
   </div>
   <div style="display:flex; gap:8px;">
@@ -1247,7 +1247,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
 window.addEventListener('appinstalled', () => {
   deferredPrompt = null;
   refreshInstallUI();
-  showToast('Wind & Tide Watch installed — find it on your home screen.');
+  showToast('Surge installed — find it on your home screen.');
 });
 
 document.getElementById('installChip').onclick = async () => {
@@ -1266,7 +1266,7 @@ document.getElementById('updateBtn').onclick = () => checkForUpdate();
 const APP_VERSION = '__BUILD__';
 let swReg = null, pendingReload = false;
 
-function doReload(){ try{ sessionStorage.setItem('wind_tide_updated', '1'); }catch(e){} location.reload(); }
+function doReload(){ try{ sessionStorage.setItem('surge_updated', '1'); }catch(e){} location.reload(); }
 
 function applyUpdate(){
   const a = document.activeElement;
@@ -1322,9 +1322,9 @@ if('serviceWorker' in navigator && location.protocol !== 'file:'){
 }
 
 try{
-  if(sessionStorage.getItem('wind_tide_updated')){
-    sessionStorage.removeItem('wind_tide_updated');
-    setTimeout(() => showToast('Wind & Tide Watch updated to the latest version'), 400);
+  if(sessionStorage.getItem('surge_updated')){
+    sessionStorage.removeItem('surge_updated');
+    setTimeout(() => showToast('Surge updated to the latest version'), 400);
   }
 }catch(e){}
 
