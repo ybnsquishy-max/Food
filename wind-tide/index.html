@@ -396,6 +396,38 @@
     margin-top:32px; padding:0 18px 20px;
   }
 
+  .info-label{
+    font-size:11px;
+    color:var(--fog-dim);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    margin-top:4px;
+  }
+  .value-group{
+    display:flex;
+    align-items:baseline;
+    gap:6px;
+  }
+  [data-info]{
+    cursor:help;
+    position:relative;
+  }
+  [data-info]:hover::after{
+    content:attr(data-info);
+    position:absolute;
+    bottom:100%;
+    left:50%;
+    transform:translateX(-50%);
+    background:rgba(0,0,0,0.8);
+    color:var(--white-ish);
+    padding:6px 10px;
+    border-radius:6px;
+    font-size:11px;
+    white-space:nowrap;
+    z-index:1000;
+    margin-bottom:8px;
+    font-family:'Inter',sans-serif;
+  }
   @media (prefers-reduced-motion: reduce){
     * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
   }
@@ -464,8 +496,10 @@
             </svg>
           </div>
           <div class="wind-readout">
-            <div><span class="val mono" id="windSpeed">--</span><span class="unit" id="windUnitLbl">kn</span></div>
-            <div class="sub">gusting <span id="windGust">--</span> · from <span class="dir" id="windDirLbl">--</span></div>
+            <div><span class="val mono" id="windSpeed" data-info="Wind speed at 10m height">--</span><span class="unit" id="windUnitLbl">kn</span></div>
+            <div class="info-label">Current wind speed</div>
+            <div class="sub" style="margin-top:8px;">gust <span id="windGust" data-info="Peak wind speed">--</span> · from <span class="dir" id="windDirLbl" data-info="Wind direction (where it comes from)">--</span></div>
+            <div class="info-label">Gust & direction</div>
           </div>
         </div>
       </div>
@@ -473,9 +507,12 @@
       <div class="panel" id="tidePanel">
         <div class="panel-label">Sea level · now</div>
         <div class="tide-readout">
-          <div><span class="val mono" id="tideNow">--</span><span class="unit" id="tideUnitLbl">m</span></div>
-          <div><span class="trend" id="tideTrend">—</span></div>
-          <div class="sub" id="waveInfo" style="margin-top:8px;">wave height —</div>
+          <div><span class="val mono" id="tideNow" data-info="Mean sea level height now">--</span><span class="unit" id="tideUnitLbl">m</span></div>
+          <div class="info-label">Sea level height</div>
+          <div><span class="trend" id="tideTrend" data-info="Water level direction">—</span></div>
+          <div class="info-label">Tide trend</div>
+          <div class="sub" id="waveInfo" style="margin-top:8px;" data-info="Height & period of ocean waves">wave height —</div>
+          <div class="info-label">Wave conditions</div>
         </div>
       </div>
 
@@ -484,9 +521,11 @@
         <div class="weather-wrap">
           <div class="weather-icon" id="wxIcon">—</div>
           <div class="weather-readout">
-            <div><span class="val mono" id="wxTemp">--</span><span class="unit">°C</span></div>
-            <div class="desc" id="wxDesc">—</div>
-            <div class="sub">feels <span id="wxFeels">--</span>° · <span id="wxHumidity">--</span>% humidity</div>
+            <div><span class="val mono" id="wxTemp" data-info="Air temperature at 2m">--</span><span class="unit">°C</span></div>
+            <div class="info-label">Air temperature</div>
+            <div class="desc" id="wxDesc" style="margin-top:8px;">—</div>
+            <div class="sub">feels <span id="wxFeels" data-info="Apparent temperature (wind chill)">--</span>° · humidity <span id="wxHumidity" data-info="Relative humidity %" >--</span>%</div>
+            <div class="info-label">Feels like & humidity</div>
           </div>
         </div>
       </div>
@@ -497,19 +536,19 @@
           <div class="sun-item">
             <span class="icon">🌅</span>
             <div>
-              <div class="label">Sunrise</div>
+              <div class="label" data-info="Sun appears on horizon">Sunrise</div>
               <div class="time" id="sunriseTime">--:--</div>
             </div>
           </div>
           <div class="sun-item">
             <span class="icon">🌇</span>
             <div>
-              <div class="label">Sunset</div>
+              <div class="label" data-info="Sun disappears below horizon">Sunset</div>
               <div class="time" id="sunsetTime">--:--</div>
             </div>
           </div>
         </div>
-        <div class="sun-daylen" id="sunDaylen">daylight —</div>
+        <div class="sun-daylen" id="sunDaylen" data-info="Total daylight hours today">daylight —</div>
       </div>
     </div>
 
@@ -518,9 +557,10 @@
         <div class="panel-label" style="margin-bottom:0;">48-hour tide · next event</div>
       </div>
       <div class="countdown-block">
-        <div class="countdown-label">Next <span id="countdownKind">tide</span> in</div>
-        <div class="countdown-big mono" id="countdownBig">--:--:--</div>
-        <div style="font-size:13px; color:var(--fog); margin-top:4px;" id="countdownSub">—</div>
+        <div class="countdown-label">Next <span id="countdownKind" data-info="High or low tide peak">tide</span> in</div>
+        <div class="countdown-big mono" id="countdownBig" data-info="Time remaining">--:--:--</div>
+        <div style="font-size:13px; color:var(--fog); margin-top:4px;" id="countdownSub" data-info="When & height of next tide">—</div>
+        <div class="info-label" style="margin-top:6px;">Time to next tidal change</div>
       </div>
       <canvas id="plotter"></canvas>
       <div class="tide-list" id="tideList"></div>
