@@ -717,10 +717,18 @@ function soundKlaxon(msg){
   document.getElementById('klaxon').classList.add('show');
   playTone();
   try{
-    if('Notification' in window && Notification.permission === 'granted'){
-      new Notification('Wind & Tide Watch', { body: msg });
+    if('Notification' in window){
+      if(Notification.permission === 'granted'){
+        new Notification('⚓ Surge Alert', { body: msg, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: 'surge-alarm' });
+      } else if(Notification.permission !== 'denied'){
+        Notification.requestPermission().then(permission => {
+          if(permission === 'granted'){
+            new Notification('⚓ Surge Alert', { body: msg, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: 'surge-alarm' });
+          }
+        });
+      }
     }
-  }catch(e){}
+  }catch(e){ console.error('Notification error:', e); }
   appendLog(msg);
 }
 
@@ -732,19 +740,27 @@ function playTone(){
   try{
     if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const now = audioCtx.currentTime;
-    [0, 0.35].forEach(offset=>{
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.0001, now + offset);
-      gain.gain.exponentialRampToValueAtTime(0.25, now + offset + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.28);
-      osc.connect(gain).connect(audioCtx.destination);
-      osc.start(now + offset);
-      osc.stop(now + offset + 0.3);
-    });
-  }catch(e){}
+    const master = audioCtx.createGain();
+    master.gain.setValueAtTime(0.3, now);
+    master.connect(audioCtx.destination);
+
+    // Play 2 beep cycles for alarm
+    for(let cycle = 0; cycle < 2; cycle++){
+      [0, 0.3].forEach(offset => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0, now + cycle*0.7 + offset);
+        gain.gain.linearRampToValueAtTime(0.3, now + cycle*0.7 + offset + 0.05);
+        gain.gain.setValueAtTime(0.3, now + cycle*0.7 + offset + 0.2);
+        gain.gain.linearRampToValueAtTime(0, now + cycle*0.7 + offset + 0.25);
+        osc.connect(gain).connect(master);
+        osc.start(now + cycle*0.7 + offset);
+        osc.stop(now + cycle*0.7 + offset + 0.25);
+      });
+    }
+  }catch(e){ console.error('Audio error:', e); }
 }
 
 function appendLog(text){
@@ -1307,7 +1323,8 @@ function checkAlarms(){
   saveState();
 }
 
-setInterval(()=>{ if(state.location) drawPlotter(marineData && marineData.hourly && marineData.hourly.sea_level_height_msl ? marineData.hourly.sea_level_height_msl.map((v,idx)=>({ ms: wallClockToMs(marineData.hourly.time[idx]), v: v==null?null:convertTide(v) })) : []); renderWindTrend(); renderWaveTrend(); checkAlarms(); }, 30000);
+setInterval(()=>{ if(state.location) checkAlarms(); }, 10000);
+setInterval(()=>{ if(state.location) { drawPlotter(marineData && marineData.hourly && marineData.hourly.sea_level_height_msl ? marineData.hourly.sea_level_height_msl.map((v,idx)=>({ ms: wallClockToMs(marineData.hourly.time[idx]), v: v==null?null:convertTide(v) })) : []); renderWindTrend(); renderWaveTrend(); } }, 30000);
 setInterval(()=>{ if(state.location) fetchAll(); }, 5*60000);
 
 loadState();
