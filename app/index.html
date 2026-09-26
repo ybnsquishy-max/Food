@@ -524,6 +524,25 @@ ol.steps{margin:0;padding-left:20px;font-size:.9rem;display:grid;gap:4px;}
       <p>Tap <b>Add</b> to create a section like Dry store or Cool room, then count what's in it.</p>
     </div>
   </section>
+
+  <section data-view="shopping" aria-labelledby="h-shopping" hidden>
+    <div class="view-head">
+      <div style="flex:1;">
+        <h1 id="h-shopping">Shopping List</h1>
+        <span class="tag">to restock</span>
+      </div>
+      <button class="btn ghost" id="shareShoppingBtn" title="Share shopping list" style="white-space:nowrap;">📤 Share</button>
+    </div>
+    <div class="stock-strip">
+      <div><b id="statNeeds">0</b><span>Items needed</span></div>
+    </div>
+    <div id="shoppingList" style="padding:16px;"></div>
+    <div class="empty" id="shoppingEmpty">
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><circle cx="20" cy="52" r="4"/><circle cx="48" cy="52" r="4"/><path d="M8 8h4l8 36h28l6-24H16"/></svg>
+      <strong>All stocked up</strong>
+      <p>Everything on your shelves is in good supply.</p>
+    </div>
+  </section>
 </main>
 
 <button class="fab" id="fab">
@@ -545,6 +564,11 @@ ol.steps{margin:0;padding-left:20px;font-size:.9rem;display:grid;gap:4px;}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18M3 12h18M3 19h18"/><path d="M6 12V8h3v4M12 12V9h3v3M7 19v-4h4v4M15 19v-3h3v3"/></svg>
       Pantry
       <span class="badge" id="tab86" hidden>0</span>
+    </button>
+    <button class="tab" data-tab="shopping">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      Shopping
+      <span class="badge" id="tabShop" hidden>0</span>
     </button>
   </div>
 </nav>
@@ -756,7 +780,7 @@ function toast(msg, opts = {}){
 }
 
 /* ---------- Tabs ---------- */
-const TABS = ['notes','method','pantry'];
+const TABS = ['notes','method','pantry','shopping'];
 const FAB_LABEL = { notes:'Add photo', method:'Add step', pantry:'Add stock' };
 let tab = TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : (load(LS_TAB, 'notes'));
 if (!TABS.includes(tab)) tab = 'notes';
@@ -765,7 +789,8 @@ function setTab(t){
   tab = t;
   $$('[data-view]').forEach(v => { v.hidden = v.dataset.view !== t; });
   $$('.tab').forEach(b => { if (b.dataset.tab === t) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
-  $('#fabLabel').textContent = FAB_LABEL[t];
+  $('#fab').hidden = t === 'shopping';
+  $('#fabLabel').textContent = FAB_LABEL[t] || '';
   save(LS_TAB, t);
   try{ history.replaceState(null, '', '#' + t); }catch(e){}
   window.scrollTo(0, 0);
@@ -1100,9 +1125,9 @@ function renderPantry(){
         </div>
         <button class="del" aria-label="Remove ${esc(item.name)}">${ICON.x}</button>`;
       $('.iname', row).oninput = (e) => { item.name = e.target.value; save(LS_PANTRY, pantry); };
-      $('.minus', row).onclick = () => { item.qty = Math.max(0, item.qty - 1); save(LS_PANTRY, pantry); renderPantry(); };
-      $('.plus', row).onclick = () => { item.qty = item.qty + 1; save(LS_PANTRY, pantry); renderPantry(); };
-      $('.del', row).onclick = (e) => armed(e.currentTarget, () => { cat.items = cat.items.filter(i => i.id !== item.id); save(LS_PANTRY, pantry); renderPantry(); });
+      $('.minus', row).onclick = () => { item.qty = Math.max(0, item.qty - 1); save(LS_PANTRY, pantry); renderPantry(); renderShoppingList(); };
+      $('.plus', row).onclick = () => { item.qty = item.qty + 1; save(LS_PANTRY, pantry); renderPantry(); renderShoppingList(); };
+      $('.del', row).onclick = (e) => armed(e.currentTarget, () => { cat.items = cat.items.filter(i => i.id !== item.id); save(LS_PANTRY, pantry); renderPantry(); renderShoppingList(); });
       body.appendChild(row);
     });
     body.insertAdjacentHTML('beforeend', `
@@ -1141,7 +1166,7 @@ $('#itemForm').onsubmit = (e) => {
   if (!name || !cat) return;
   cat.items.push({ id: uid(), name, qty: Math.max(0, Number($('#newItemQty').value) || 0), unit: $('#newItemUnit').value.trim() });
   cat.open = true;
-  save(LS_PANTRY, pantry); renderPantry();
+  save(LS_PANTRY, pantry); renderPantry(); renderShoppingList();
   toast(`${name} added to ${cat.name}`);
   $('#newItemName').value = ''; $('#newItemQty').value = 1;
   $('#newItemName').focus(); // keep the sheet open for fast counting
@@ -1153,7 +1178,7 @@ $('#catForm').onsubmit = (e) => {
   const color = (document.querySelector('input[name="board"]:checked') || {}).value || 'steel';
   const cat = { id: uid(), name, open: true, color, items: [] };
   pantry.push(cat);
-  save(LS_PANTRY, pantry); renderPantry();
+  save(LS_PANTRY, pantry); renderPantry(); renderShoppingList();
   $('#newCatName').value = '';
   fillCatSelect(cat.id);
   setPantryMode('item');
@@ -1179,6 +1204,93 @@ $('#sharePantryBtn').onclick = () => {
     try{
       navigator.clipboard.writeText(text);
       toast('✓ Pantry copied to clipboard — ready to share');
+    }catch(e){ toast('Unable to share'); }
+  }
+};
+
+function renderShoppingList(){
+  const needed = [];
+  pantry.forEach(cat => {
+    cat.items.forEach(item => {
+      if(item.qty <= 0){
+        needed.push({ cat: cat.name, name: item.name, unit: item.unit, id: item.id });
+      }
+    });
+  });
+
+  const list = $('#shoppingList');
+  const empty = $('#shoppingEmpty');
+  const badge = $('#tabShop');
+
+  list.innerHTML = '';
+  if(!needed.length){
+    list.hidden = true;
+    empty.hidden = false;
+    badge.hidden = true;
+    $('#statNeeds').textContent = '0';
+    return;
+  }
+
+  list.hidden = false;
+  empty.hidden = true;
+  badge.textContent = needed.length;
+  badge.hidden = false;
+  $('#statNeeds').textContent = needed.length;
+
+  const byCategory = {};
+  needed.forEach(item => {
+    if(!byCategory[item.cat]) byCategory[item.cat] = [];
+    byCategory[item.cat].push(item);
+  });
+
+  Object.entries(byCategory).forEach(([cat, items]) => {
+    const section = document.createElement('div');
+    section.style.marginBottom = '20px';
+    section.innerHTML = `<h3 style="font-size:0.9rem;color:var(--ink-soft);margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.05em;">${esc(cat)}</h3>`;
+    const ul = document.createElement('ul');
+    ul.style.cssText = 'list:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px;';
+    items.forEach(item => {
+      const li = document.createElement('li');
+      li.style.cssText = 'padding:8px;background:var(--surface-2);border-radius:6px;display:flex;justify-content:space-between;align-items:center;';
+      li.innerHTML = `<span>${esc(item.name)}</span><span style="color:var(--ink-soft);font-size:0.9rem;">${esc(item.unit || '')}</span>`;
+      ul.appendChild(li);
+    });
+    section.appendChild(ul);
+    list.appendChild(section);
+  });
+}
+
+$('#shareShoppingBtn').onclick = () => {
+  const needed = [];
+  pantry.forEach(cat => {
+    cat.items.forEach(item => {
+      if(item.qty <= 0) needed.push({ cat: cat.name, name: item.name, unit: item.unit });
+    });
+  });
+
+  if(!needed.length){ toast('Nothing to restock'); return; }
+
+  let text = '🛒 Shopping List\n' + new Date().toLocaleDateString() + '\n\n';
+  const byCategory = {};
+  needed.forEach(item => {
+    if(!byCategory[item.cat]) byCategory[item.cat] = [];
+    byCategory[item.cat].push(item);
+  });
+
+  Object.entries(byCategory).forEach(([cat, items]) => {
+    text += `📍 ${cat}\n`;
+    items.forEach(item => {
+      text += `  ☐ ${item.name} ${item.unit ? '(' + item.unit + ')' : ''}\n`;
+    });
+    text += '\n';
+  });
+
+  if(navigator.share){
+    navigator.share({ title:'Shopping List', text }).catch(()=>{});
+  } else {
+    try{
+      navigator.clipboard.writeText(text);
+      toast('✓ Shopping list copied to clipboard — ready to send to mum');
     }catch(e){ toast('Unable to share'); }
   }
 };
@@ -1286,6 +1398,7 @@ renderAllergenPicks();
 renderNotes();
 renderWorkflow();
 renderPantry();
+renderShoppingList();
 setTab(tab);
 refreshInstallUI();
 
