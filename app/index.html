@@ -512,8 +512,11 @@ ol.steps{margin:0;padding-left:20px;font-size:.9rem;display:grid;gap:4px;}
   <!-- PANTRY -->
   <section data-view="pantry" aria-labelledby="h-pantry" hidden>
     <div class="view-head">
-      <h1 id="h-pantry">Pantry</h1>
-      <span class="tag">running count</span>
+      <div style="flex:1;">
+        <h1 id="h-pantry">Pantry</h1>
+        <span class="tag">running count</span>
+      </div>
+      <button class="btn ghost" id="sharePantryBtn" title="Share pantry" style="white-space:nowrap;">📤 Share</button>
     </div>
     <div class="stock-strip" id="stockStrip">
       <div><b id="statItems">0</b><span>Items</span></div>
@@ -1172,6 +1175,28 @@ $('#catForm').onsubmit = (e) => {
   setPantryMode('item');
   $('#newItemName').focus();
   toast(`${name} created. Now add some stock.`);
+};
+
+$('#sharePantryBtn').onclick = () => {
+  if(!pantry.length){ toast('No pantry items to share'); return; }
+  let text = '📦 Pantry Inventory\n' + new Date().toLocaleDateString() + '\n\n';
+  pantry.forEach(cat => {
+    if(cat.items.length){
+      text += `📍 ${cat.name}\n`;
+      cat.items.forEach(item => {
+        text += `  • ${item.name}: ${item.qty} ${item.unit}\n`;
+      });
+      text += '\n';
+    }
+  });
+  if(navigator.share){
+    navigator.share({ title:'Pantry', text }).catch(()=>{});
+  } else {
+    try{
+      navigator.clipboard.writeText(text);
+      toast('✓ Pantry copied to clipboard — ready to share');
+    }catch(e){ toast('Unable to share'); }
+  }
 };
 
 /* =========================================================
