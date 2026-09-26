@@ -1,5 +1,6 @@
 // Wind & Tide Watch service worker
 // BUILD is stamped by deploy workflow — each deploy ships a byte-different sw.js
+// Cache buster: 2026-09-26-07-20-01
 const BUILD = '__BUILD__';
 const CACHE = 'wind-tide-' + BUILD;
 const FONT_CACHE = 'wind-tide-fonts';
