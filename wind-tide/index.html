@@ -1036,14 +1036,22 @@ function drawPlotter(points){
     if(!started){ ctx.moveTo(x,y); started=true; } else { ctx.lineTo(x,y); }
   });
   ctx.stroke();
-  ctx.fillStyle = 'rgba(159,184,200,0.5)';
-  ctx.font = '10px IBM Plex Mono';
+  ctx.fillStyle = 'rgba(10,34,51,0.7)';
+  ctx.fillRect(0, h-18, 50, 16);
+  ctx.fillRect(w-50, h-18, 50, 16);
+  ctx.fillStyle = 'rgba(159,184,200,0.9)';
+  ctx.font = 'bold 12px IBM Plex Mono';
   ctx.textAlign = 'left';
-  ctx.fillText('0h', 4, h-2);
-  ctx.fillText('24h', w-28, h-2);
+  ctx.fillText('0h', 4, h-4);
   ctx.textAlign = 'right';
-  ctx.fillText(minV.toFixed(1), w-6, h-4);
-  ctx.fillText(maxV.toFixed(1), w-6, 14);
+  ctx.fillText('24h', w-4, h-4);
+  ctx.fillStyle = 'rgba(10,34,51,0.7)';
+  ctx.fillRect(w-50, 0, 50, 18);
+  ctx.fillRect(w-50, h-18, 50, 16);
+  ctx.fillStyle = 'rgba(159,184,200,0.9)';
+  ctx.textAlign = 'right';
+  ctx.fillText(maxV.toFixed(1), w-4, 13);
+  ctx.fillText(minV.toFixed(1), w-4, h-4);
 }
 
 function renderWindTrend(){
@@ -1073,14 +1081,22 @@ function renderWindTrend(){
     if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
   });
   ctx.stroke();
-  ctx.fillStyle = 'rgba(159,184,200,0.5)';
-  ctx.font = '10px IBM Plex Mono';
+  ctx.fillStyle = 'rgba(10,34,51,0.7)';
+  ctx.fillRect(0, h-18, 50, 16);
+  ctx.fillRect(w-50, h-18, 50, 16);
+  ctx.fillStyle = 'rgba(227,169,79,0.95)';
+  ctx.font = 'bold 12px IBM Plex Mono';
   ctx.textAlign = 'left';
-  ctx.fillText('now', 4, h-2);
-  ctx.fillText('48h', w-28, h-2);
+  ctx.fillText('now', 4, h-4);
   ctx.textAlign = 'right';
-  ctx.fillText(minV.toFixed(1)+'kn', w-6, h-4);
-  ctx.fillText(maxV.toFixed(1)+'kn', w-6, 14);
+  ctx.fillText('48h', w-4, h-4);
+  ctx.fillStyle = 'rgba(10,34,51,0.7)';
+  ctx.fillRect(w-65, 0, 65, 18);
+  ctx.fillRect(w-65, h-18, 65, 16);
+  ctx.fillStyle = 'rgba(227,169,79,0.95)';
+  ctx.textAlign = 'right';
+  ctx.fillText(maxV.toFixed(1)+'kn', w-4, 13);
+  ctx.fillText(minV.toFixed(1)+'kn', w-4, h-4);
 }
 
 function renderWaveTrend(){
@@ -1109,14 +1125,22 @@ function renderWaveTrend(){
     if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
   });
   ctx.stroke();
-  ctx.fillStyle = 'rgba(159,184,200,0.5)';
-  ctx.font = '10px IBM Plex Mono';
+  ctx.fillStyle = 'rgba(10,34,51,0.7)';
+  ctx.fillRect(0, h-18, 50, 16);
+  ctx.fillRect(w-50, h-18, 50, 16);
+  ctx.fillStyle = 'rgba(159,184,200,0.95)';
+  ctx.font = 'bold 12px IBM Plex Mono';
   ctx.textAlign = 'left';
-  ctx.fillText('now', 4, h-2);
-  ctx.fillText('48h', w-28, h-2);
+  ctx.fillText('now', 4, h-4);
   ctx.textAlign = 'right';
-  ctx.fillText(minV.toFixed(1)+'m', w-6, h-4);
-  ctx.fillText(maxV.toFixed(1)+'m', w-6, 14);
+  ctx.fillText('48h', w-4, h-4);
+  ctx.fillStyle = 'rgba(10,34,51,0.7)';
+  ctx.fillRect(w-50, 0, 50, 18);
+  ctx.fillRect(w-50, h-18, 50, 16);
+  ctx.fillStyle = 'rgba(159,184,200,0.95)';
+  ctx.textAlign = 'right';
+  ctx.fillText(maxV.toFixed(1)+'m', w-4, 13);
+  ctx.fillText(minV.toFixed(1)+'m', w-4, h-4);
 }
 
 document.getElementById('windUnitSel').addEventListener('change', e=>{
