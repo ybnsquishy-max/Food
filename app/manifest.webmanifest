@@ -1,0 +1,23 @@
+{
+  "name": "Mise — kitchen notes, methods & pantry",
+  "short_name": "Mise",
+  "description": "Snap class notes, turn them into step-by-step methods, and keep a running pantry count.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#15171A",
+  "theme_color": "#15171A",
+  "categories": ["food", "education", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Notes", "url": "./#notes", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Method", "url": "./#method", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Pantry", "url": "./#pantry", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

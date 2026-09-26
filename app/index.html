@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mise</title>
+<meta name="description" content="Snap class notes, turn them into step-by-step methods, and keep a running pantry count.">
+<meta name="theme-color" content="#E4E7EA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1113" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mise">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --ground:#E4E7EA;      /* brushed steel bench */
+  --surface:#FBFAF6;     /* docket paper */
+  --surface-2:#EEF0F2;
+  --ink:#15171A;
+  --ink-soft:#5B626B;
+  --line:#CDD2D7;
+  --accent:#F2A60C;      /* pass lamp */
+  --accent-ink:#8F5F00;
+  --on-accent:#15171A;
+  --danger:#C23B22;
+  --ok:#2F7D3B;
+  --shadow:0 1px 2px rgba(21,23,26,.06),0 6px 18px rgba(21,23,26,.06);
+  --nav-h:64px;
+
+  --display:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#0F1113;
+    --surface:#1A1D21;
+    --surface-2:#23272C;
+    --ink:#ECEDEA;
+    --ink-soft:#98A0A9;
+    --line:#2F343A;
+    --accent-ink:#F5B53A;
+    --danger:#F0735A;
+    --ok:#6CC47A;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0F1113;
+  --surface:#1A1D21;
+  --surface-2:#23272C;
+  --ink:#ECEDEA;
+  --ink-soft:#98A0A9;
+  --line:#2F343A;
+  --accent-ink:#F5B53A;
+  --danger:#F0735A;
+  --ok:#6CC47A;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font:400 16px/1.45 var(--body);
+  -webkit-tap-highlight-color:transparent;
+}
+button,input,select,textarea{font:inherit;color:inherit;}
+button{cursor:pointer;}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+[hidden]{display:none !important;}
+svg{display:block;}
+
+/* ---------- Shell ---------- */
+.topbar{
+  position:sticky;top:0;z-index:20;
+  background:var(--ground);
+  padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 10px;
+  border-bottom:1px solid var(--line);
+}
+.topbar-inner{max-width:680px;margin:0 auto;display:flex;align-items:center;gap:12px;}
+.brand{display:flex;align-items:baseline;gap:10px;flex:1;min-width:0;}
+.brand b{
+  font:700 1.75rem/1 var(--display);
+  letter-spacing:.06em;text-transform:uppercase;
+}
+.brand b i{font-style:normal;color:var(--accent-ink);}
+.docket-date{
+  font:600 .7rem/1 var(--mono);letter-spacing:.08em;color:var(--ink-soft);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.icon-btn{
+  width:40px;height:40px;border-radius:12px;border:1px solid var(--line);
+  background:var(--surface);display:grid;place-items:center;flex:none;
+}
+.icon-btn svg{width:20px;height:20px;}
+.install-chip{
+  border:none;background:var(--ink);color:var(--ground);
+  font:600 .8rem/1 var(--body);padding:10px 12px;border-radius:999px;
+  display:flex;align-items:center;gap:6px;flex:none;
+}
+.install-chip svg{width:16px;height:16px;}
+
+main{
+  max-width:680px;margin:0 auto;
+  padding:18px 16px calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 96px);
+}
+.view-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px;}
+.view-head h1{
+  margin:0;font:700 2.25rem/.95 var(--display);text-transform:uppercase;letter-spacing:.02em;
+  text-wrap:balance;
+}
+.view-head .tag{
+  font:600 .72rem/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);
+  padding-bottom:4px;white-space:nowrap;
+}
+.lede{margin:-6px 0 16px;color:var(--ink-soft);font-size:.95rem;max-width:60ch;}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:44px;padding:0 16px;border-radius:12px;
+  border:1px solid var(--ink);background:var(--ink);color:var(--ground);
+  font:600 .95rem/1 var(--body);
+}
+.btn svg{width:18px;height:18px;}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line);}
+.btn.amber{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
+.btn.danger{background:transparent;color:var(--danger);border-color:currentColor;}
+.btn:disabled{opacity:.4;cursor:default;}
+.btn.block{width:100%;}
+.row{display:flex;flex-wrap:wrap;gap:10px;}
+.row > .grow{flex:1 1 180px;}
+
+.status{
+  font:400 .8rem/1.4 var(--mono);color:var(--ink-soft);
+  margin:12px 0 0;padding:10px 12px;border-radius:10px;background:var(--surface-2);
+}
+.status.err{color:var(--danger);}
+
+/* ---------- Notes ---------- */
+.note-toolbar{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  padding:12px;border-radius:16px;background:var(--surface);border:1px solid var(--line);
+  margin-bottom:16px;
+}
+.note-toolbar .count{font:600 .8rem/1 var(--mono);color:var(--ink-soft);flex:1 1 100%;}
+.note-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+.note{
+  position:relative;background:var(--surface);border:1px solid var(--line);
+  border-radius:14px;overflow:hidden;box-shadow:var(--shadow);
+  transition:border-color .15s, transform .15s;
+}
+.note.is-sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent);}
+.note img{width:100%;max-width:100%;aspect-ratio:3/4;object-fit:cover;display:block;background:var(--surface-2);}
+.note-sel{
+  position:absolute;top:8px;left:8px;width:30px;height:30px;border-radius:9px;
+  background:rgba(21,23,26,.55);display:grid;place-items:center;cursor:pointer;
+}
+.note-sel input{appearance:none;margin:0;width:18px;height:18px;border-radius:5px;border:2px solid #fff;cursor:pointer;}
+.note-sel input:checked{background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='%2315171A' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat;border-color:var(--accent);}
+.note-del{
+  position:absolute;top:8px;right:8px;height:30px;min-width:30px;padding:0 8px;border-radius:9px;border:none;
+  background:rgba(21,23,26,.55);color:#fff;font:600 .75rem/1 var(--body);
+}
+.note-del.armed{background:var(--danger);}
+.note-cvt{
+  position:absolute;right:8px;bottom:52px;border:none;border-radius:8px;
+  background:var(--accent);color:var(--on-accent);font:600 .72rem/1 var(--mono);padding:7px 9px;
+}
+.note-label{
+  width:100%;border:none;border-top:1px dashed var(--line);background:none;
+  font:400 .8rem/1 var(--mono);padding:13px 10px;
+}
+.note-label::placeholder{color:var(--ink-soft);}
+
+/* ---------- Empty states ---------- */
+.empty{
+  display:grid;justify-items:center;text-align:center;gap:10px;
+  padding:36px 20px;border:1.5px dashed var(--line);border-radius:18px;color:var(--ink-soft);
+}
+.empty svg{width:64px;height:64px;color:var(--ink-soft);}
+.empty strong{font:700 1.3rem/1.1 var(--display);text-transform:uppercase;letter-spacing:.03em;color:var(--ink);}
+.empty p{margin:0;max-width:34ch;font-size:.92rem;}
+
+/* ---------- Method (docket tickets) ---------- */
+.wf-title{
+  width:100%;border:none;border-bottom:2px solid var(--ink);background:none;
+  font:700 1.6rem/1.1 var(--display);text-transform:uppercase;letter-spacing:.02em;
+  padding:6px 0 8px;margin-bottom:18px;
+}
+.wf-title::placeholder{color:var(--ink-soft);opacity:.7;}
+.tickets{display:grid;gap:22px;}
+.ticket{
+  position:relative;background:var(--surface);
+  border-radius:4px 4px 0 0;padding:14px 14px 12px 0;
+  display:grid;grid-template-columns:58px 1fr auto;gap:0 10px;
+  box-shadow:var(--shadow);
+}
+.ticket::after{ /* torn docket edge */
+  content:"";position:absolute;left:0;right:0;bottom:-8px;height:8px;
+  background:
+    linear-gradient(135deg,var(--surface) 50%,transparent 50%) 0 0/12px 8px repeat-x,
+    linear-gradient(225deg,var(--surface) 50%,transparent 50%) 0 0/12px 8px repeat-x;
+}
+.ticket .num{
+  font:700 2.2rem/1 var(--display);color:var(--accent-ink);text-align:center;
+  border-right:1px dashed var(--line);padding-top:2px;
+}
+.ticket .fields{display:grid;gap:4px;min-width:0;}
+.ticket .stitle{
+  border:none;background:none;width:100%;
+  font:600 1.08rem/1.2 var(--body);padding:2px 0;
+}
+.ticket .sdetail{
+  border:none;background:none;width:100%;resize:vertical;min-height:44px;
+  font:400 .88rem/1.45 var(--body);color:var(--ink-soft);padding:2px 0;
+}
+.ticket .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+.chip-field{
+  display:flex;align-items:center;gap:6px;flex:1 1 150px;min-width:0;
+  border:1px solid var(--line);border-radius:8px;padding:0 8px;background:var(--surface-2);
+}
+.chip-field svg{width:15px;height:15px;flex:none;color:var(--ink-soft);}
+.chip-field input{
+  border:none;background:none;width:100%;min-width:0;
+  font:400 .78rem/1 var(--mono);padding:9px 0;
+}
+.chip-field.allerg{border-color:color-mix(in srgb,var(--danger) 45%,var(--line));}
+.chip-field.allerg svg{color:var(--danger);}
+.ticket .actions{display:flex;flex-direction:column;gap:2px;}
+.ticket .actions button{
+  width:34px;height:32px;border:none;background:none;border-radius:8px;color:var(--ink-soft);
+  display:grid;place-items:center;
+}
+.ticket .actions button:hover{background:var(--surface-2);color:var(--ink);}
+.ticket .actions button.armed{background:var(--danger);color:#fff;}
+.ticket .actions svg{width:16px;height:16px;}
+.wf-foot{margin-top:28px;}
+
+/* ---------- Pantry ---------- */
+.stock-strip{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:18px;
+}
+.stock-strip div{background:var(--surface);padding:12px 12px 10px;}
+.stock-strip b{display:block;font:700 1.9rem/1 var(--display);font-variant-numeric:tabular-nums;}
+.stock-strip span{font:600 .66rem/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);}
+.stock-strip .hot b{color:var(--danger);}
+.cats{display:grid;gap:12px;}
+.cat{
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.cat-head{
+  width:100%;display:flex;align-items:center;gap:12px;
+  border:none;background:none;text-align:left;padding:14px 14px 14px 12px;
+}
+.board{
+  width:14px;height:34px;border-radius:4px;flex:none;background:var(--board,#999);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.18);
+}
+.cat-head h2{margin:0;font:700 1.3rem/1 var(--display);text-transform:uppercase;letter-spacing:.03em;}
+.cat-head .sub{display:block;font:400 .72rem/1.3 var(--mono);color:var(--ink-soft);margin-top:4px;}
+.cat-head .titles{flex:1;min-width:0;}
+.flag86{
+  font:600 .7rem/1 var(--mono);color:#fff;background:var(--danger);
+  padding:5px 7px;border-radius:6px;white-space:nowrap;
+}
+.chev{width:20px;height:20px;color:var(--ink-soft);transition:transform .2s;}
+.cat-head[aria-expanded="true"] .chev{transform:rotate(180deg);}
+.cat-body{border-top:1px solid var(--line);padding:4px 14px 14px;}
+.item{
+  display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;
+  padding:10px 0;border-bottom:1px solid var(--line);
+}
+.item .iname{border:none;background:none;min-width:0;width:100%;font:500 .95rem/1.2 var(--body);padding:4px 0;}
+.stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface-2);}
+.stepper button{width:36px;height:36px;border:none;background:none;font:600 1.1rem/1 var(--body);}
+.stepper button:active{background:var(--line);}
+.stepper output{
+  min-width:62px;text-align:center;font:600 .85rem/1 var(--mono);font-variant-numeric:tabular-nums;
+  padding:0 2px;
+}
+.stepper output small{font-weight:400;color:var(--ink-soft);font-size:.7rem;margin-left:3px;}
+.item.is86 .iname{color:var(--danger);text-decoration:line-through;text-decoration-thickness:1px;}
+.item.is86 output{color:var(--danger);}
+.item .del{
+  width:32px;height:32px;border:none;background:none;border-radius:8px;color:var(--ink-soft);
+  display:grid;place-items:center;
+}
+.item .del.armed{background:var(--danger);color:#fff;}
+.item .del svg{width:15px;height:15px;}
+.cat-foot{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;margin-top:12px;}
+.cat-foot .btn{min-height:38px;font-size:.85rem;padding:0 12px;}
+.cat-empty{padding:14px 0 4px;color:var(--ink-soft);font-size:.88rem;}
+
+/* ---------- Bottom nav + FAB ---------- */
+.tabbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;
+  background:var(--surface);border-top:1px solid var(--line);
+  padding:0 8px env(safe-area-inset-bottom,0px);
+}
+.tabbar-inner{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);height:var(--nav-h);}
+.tab{
+  border:none;background:none;display:grid;justify-items:center;align-content:center;gap:4px;
+  color:var(--ink-soft);font:600 .72rem/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;
+  position:relative;
+}
+.tab svg{width:22px;height:22px;}
+.tab[aria-current="page"]{color:var(--ink);}
+.tab[aria-current="page"]::before{
+  content:"";position:absolute;top:0;left:30%;right:30%;height:3px;border-radius:0 0 3px 3px;background:var(--accent);
+}
+.tab .badge{
+  position:absolute;top:10px;left:calc(50% + 8px);min-width:16px;height:16px;border-radius:8px;
+  background:var(--danger);color:#fff;font:600 .6rem/16px var(--mono);letter-spacing:0;padding:0 4px;
+}
+.fab{
+  position:fixed;z-index:31;
+  right:max(16px, calc(50% - 340px + 16px));
+  bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 16px);
+  height:58px;padding:0 20px 0 16px;border-radius:18px;border:none;
+  background:var(--accent);color:var(--on-accent);
+  display:flex;align-items:center;gap:8px;font:700 1rem/1 var(--display);letter-spacing:.06em;text-transform:uppercase;
+  box-shadow:0 8px 24px rgba(242,166,12,.35),0 2px 6px rgba(0,0,0,.2);
+  transition:transform .15s;
+}
+.fab:active{transform:scale(.96);}
+.fab svg{width:24px;height:24px;}
+
+/* ---------- Sheets ---------- */
+dialog.sheet{
+  border:none;padding:0;margin:auto auto 0;width:100%;max-width:680px;max-height:92vh;
+  background:var(--surface);color:var(--ink);border-radius:22px 22px 0 0;
+  box-shadow:0 -10px 40px rgba(0,0,0,.25);
+}
+dialog.sheet::backdrop{background:rgba(10,12,14,.5);backdrop-filter:blur(2px);}
+dialog.sheet[open]{animation:rise .24s cubic-bezier(.2,.8,.2,1);}
+@keyframes rise{from{transform:translateY(40px);opacity:.4;}to{transform:none;opacity:1;}}
+.sheet-inner{padding:10px 18px calc(env(safe-area-inset-bottom,0px) + 20px);display:grid;gap:16px;}
+.grabber{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto;}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.sheet-head h2{margin:0;font:700 1.6rem/1 var(--display);text-transform:uppercase;letter-spacing:.03em;}
+.big-choices{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.big-choice{
+  display:grid;gap:10px;justify-items:start;text-align:left;
+  padding:18px 16px;border-radius:16px;border:1px solid var(--line);background:var(--surface-2);
+}
+.big-choice svg{width:30px;height:30px;}
+.big-choice b{font:700 1.15rem/1 var(--display);text-transform:uppercase;letter-spacing:.03em;}
+.big-choice span{font-size:.82rem;color:var(--ink-soft);line-height:1.3;}
+.big-choice.primary{background:var(--ink);color:var(--ground);border-color:var(--ink);}
+.big-choice.primary span{color:inherit;opacity:.7;}
+.field{display:grid;gap:6px;}
+.field > span{font:600 .7rem/1 var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft);}
+.input{
+  width:100%;min-height:46px;border:1px solid var(--line);border-radius:12px;background:var(--ground);
+  padding:10px 12px;font:400 1rem/1.3 var(--body);
+}
+textarea.input{min-height:84px;resize:vertical;}
+.input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent);}
+.fields-3{display:grid;grid-template-columns:1fr 90px 100px;gap:10px;}
+@media (max-width:420px){.fields-3{grid-template-columns:1fr 1fr;}.fields-3 .field:first-child{grid-column:1/-1;}}
+.seg{display:grid;grid-template-columns:1fr 1fr;padding:4px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);}
+.seg button{border:none;background:none;min-height:40px;border-radius:9px;font:600 .9rem/1 var(--body);color:var(--ink-soft);}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow);}
+.boards{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;}
+.boards label{
+  display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;border:1px solid var(--line);
+  cursor:pointer;font-size:.85rem;line-height:1.2;
+}
+.boards input{position:absolute;opacity:0;pointer-events:none;}
+.boards label:has(input:checked){border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);}
+.boards label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px;}
+.boards .board{height:26px;width:12px;}
+.allergen-picks{display:flex;flex-wrap:wrap;gap:6px;}
+.allergen-picks button{
+  border:1px solid var(--line);background:var(--surface-2);border-radius:999px;
+  padding:7px 11px;font:500 .8rem/1 var(--body);
+}
+.allergen-picks button[aria-pressed="true"]{background:var(--danger);border-color:var(--danger);color:#fff;}
+.hint{margin:0;font-size:.82rem;color:var(--ink-soft);}
+.settings-block{display:grid;gap:10px;padding:14px;border-radius:14px;background:var(--surface-2);}
+.settings-block h3{margin:0;font:700 1.1rem/1 var(--display);text-transform:uppercase;letter-spacing:.04em;}
+.kv{display:flex;justify-content:space-between;gap:10px;font:400 .8rem/1.3 var(--mono);color:var(--ink-soft);}
+.kv b{color:var(--ink);font-weight:600;}
+ol.steps{margin:0;padding-left:20px;font-size:.9rem;display:grid;gap:4px;}
+
+/* ---------- Toast ---------- */
+.toast{
+  position:fixed;z-index:60;left:16px;right:16px;
+  bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 90px);
+  max-width:520px;margin:0 auto;
+  display:flex;align-items:center;gap:12px;
+  background:var(--ink);color:var(--ground);border-radius:14px;padding:12px 14px;
+  font-size:.9rem;box-shadow:0 10px 30px rgba(0,0,0,.3);
+}
+.toast span{flex:1;}
+.toast button{border:none;background:var(--accent);color:var(--on-accent);border-radius:9px;padding:8px 12px;font:600 .82rem/1 var(--body);white-space:nowrap;}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important;}
+}
+
+/* ---------- Print ---------- */
+#printArea{display:none;}
+@media print{
+  body{background:#fff;}
+  body > *:not(#printArea){display:none !important;}
+  #printArea{display:block !important;color:#000;font-family:var(--body);}
+  #printArea h1{font:700 22pt/1.1 var(--display);text-transform:uppercase;margin:0 0 12pt;}
+  .print-note{break-inside:avoid;margin-bottom:14pt;}
+  .print-note img{width:100%;max-height:6in;object-fit:contain;}
+  .print-note p{font:10pt/1.3 var(--mono);margin:4pt 0 0;}
+  .print-step{break-inside:avoid;margin-bottom:10pt;padding-bottom:8pt;border-bottom:1px dashed #999;}
+  .print-step h3{margin:0 0 2pt;font-size:13pt;}
+  .print-step p{margin:0;font-size:11pt;}
+  .print-step .meta{font:9.5pt var(--mono);margin-top:3pt;}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <b>Mis<i>e</i></b>
+      <span class="docket-date" id="docketDate">EN PLACE</span>
+    </div>
+    <button class="install-chip" id="installChip" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+      Install
+    </button>
+    <button class="icon-btn" id="settingsBtn" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+  <!-- NOTES -->
+  <section data-view="notes" aria-labelledby="h-notes">
+    <div class="view-head">
+      <h1 id="h-notes">Notes</h1>
+      <span class="tag" id="notesTag">0 photos</span>
+    </div>
+    <p class="lede">Photos of class notes and recipe cards. Select some and turn them into a step-by-step method.</p>
+
+    <div class="note-toolbar" id="noteToolbar" hidden>
+      <span class="count" id="selCount">0 selected</span>
+      <button class="btn amber grow" id="convertBtn" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9l-4.7 1.8L12 15.5l-1.8-4.7L5.5 9l4.7-1.3z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
+        Convert to method
+      </button>
+      <button class="btn ghost" id="printNotesBtn" disabled>Print</button>
+    </div>
+    <p class="status" id="convertStatus" role="status" hidden></p>
+
+    <input type="file" accept="image/*" capture="environment" id="photoInput" class="sr" tabindex="-1">
+    <input type="file" accept="image/*" id="libraryInput" class="sr" tabindex="-1" multiple>
+
+    <div class="note-grid" id="noteGrid"></div>
+    <div class="empty" id="notesEmpty">
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="16" width="48" height="36" rx="6"/><path d="M22 16l4-6h12l4 6"/><circle cx="32" cy="34" r="10"/><circle cx="32" cy="34" r="4"/></svg>
+      <strong>No notes on the rail</strong>
+      <p>Tap <b>Add</b> to snap your class notes or pick photos from your library.</p>
+    </div>
+  </section>
+
+  <!-- METHOD -->
+  <section data-view="method" aria-labelledby="h-method" hidden>
+    <div class="view-head">
+      <h1 id="h-method">Method</h1>
+      <span class="tag" id="methodTag">0 steps</span>
+    </div>
+    <label class="sr" for="wfTitle">Method title</label>
+    <input class="wf-title" id="wfTitle" placeholder="Dish name" autocomplete="off">
+    <div class="tickets" id="stepList"></div>
+    <div class="empty" id="methodEmpty">
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M16 8h32v44l-4 4-4-4-4 4-4-4-4 4-4-4-4 4-4-4z"/><path d="M24 20h16M24 28h16M24 36h10"/></svg>
+      <strong>No tickets yet</strong>
+      <p>Add steps by hand, or convert a photo of your notes on the Notes tab.</p>
+    </div>
+    <div class="row wf-foot" id="wfFoot" hidden>
+      <button class="btn grow" id="printWfBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4v-7h16v7h-2"/><rect x="6" y="14" width="12" height="7"/></svg>
+        Print method
+      </button>
+      <button class="btn danger" id="clearWfBtn">Clear all</button>
+    </div>
+  </section>
+
+  <!-- PANTRY -->
+  <section data-view="pantry" aria-labelledby="h-pantry" hidden>
+    <div class="view-head">
+      <h1 id="h-pantry">Pantry</h1>
+      <span class="tag">running count</span>
+    </div>
+    <div class="stock-strip" id="stockStrip">
+      <div><b id="statItems">0</b><span>Items</span></div>
+      <div class="hot"><b id="stat86">0</b><span>86'd · out</span></div>
+      <div><b id="statCats">0</b><span>Sections</span></div>
+    </div>
+    <div class="cats" id="catList"></div>
+    <div class="empty" id="pantryEmpty">
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M10 12h44M10 32h44M10 52h44"/><rect x="14" y="18" width="10" height="14"/><rect x="28" y="22" width="8" height="10"/><rect x="40" y="16" width="10" height="16"/><rect x="16" y="40" width="14" height="12"/><rect x="36" y="38" width="12" height="14"/></svg>
+      <strong>Empty shelves</strong>
+      <p>Tap <b>Add</b> to create a section like Dry store or Cool room, then count what's in it.</p>
+    </div>
+  </section>
+</main>
+
+<button class="fab" id="fab">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+  <span id="fabLabel">Add</span>
+</button>
+
+<nav class="tabbar" aria-label="Sections">
+  <div class="tabbar-inner">
+    <button class="tab" data-tab="notes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M8 6l2-3h4l2 3"/><circle cx="12" cy="13" r="3.5"/></svg>
+      Notes
+    </button>
+    <button class="tab" data-tab="method">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v17l-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5L6 20z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>
+      Method
+    </button>
+    <button class="tab" data-tab="pantry">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18M3 12h18M3 19h18"/><path d="M6 12V8h3v4M12 12V9h3v3M7 19v-4h4v4M15 19v-3h3v3"/></svg>
+      Pantry
+      <span class="badge" id="tab86" hidden>0</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ADD SHEET -->
+<dialog class="sheet" id="addSheet" aria-labelledby="addTitle">
+  <div class="sheet-inner">
+    <div class="grabber" aria-hidden="true"></div>
+    <div class="sheet-head">
+      <h2 id="addTitle">Add</h2>
+      <button class="icon-btn" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <!-- notes -->
+    <div data-add="notes" class="big-choices">
+      <button class="big-choice primary" id="takePhotoBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M8 6l2-3h4l2 3"/><circle cx="12" cy="13" r="3.5"/></svg>
+        <b>Take photo</b>
+        <span>Snap the whiteboard or your notebook</span>
+      </button>
+      <button class="big-choice" id="addPhotoBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+        <b>From library</b>
+        <span>Pick one or several saved photos</span>
+      </button>
+    </div>
+
+    <!-- method -->
+    <form data-add="method" id="stepForm" class="sheet-inner" style="padding:0">
+      <label class="field"><span>Step</span>
+        <input class="input" id="newStepTitle" placeholder="e.g. Reduce shallots and wine" required autocomplete="off">
+      </label>
+      <label class="field"><span>Method &amp; safety notes</span>
+        <textarea class="input" id="newStepDetail" placeholder="e.g. Reduce by ¾ until almost dry. Keep heat medium."></textarea>
+      </label>
+      <label class="field"><span>Temp / time</span>
+        <input class="input" id="newStepTemp" placeholder="e.g. 180°C, 12 min" autocomplete="off">
+      </label>
+      <div class="field"><span>Allergens</span>
+        <div class="allergen-picks" id="allergenPicks"></div>
+      </div>
+      <button class="btn amber block" type="submit">Add step to method</button>
+    </form>
+
+    <!-- pantry -->
+    <div data-add="pantry" class="sheet-inner" style="padding:0">
+      <div class="seg" role="group" aria-label="What to add">
+        <button type="button" data-mode="item" aria-pressed="true">Stock item</button>
+        <button type="button" data-mode="cat" aria-pressed="false">Section</button>
+      </div>
+      <form id="itemForm" class="sheet-inner" style="padding:0">
+        <div class="fields-3">
+          <label class="field"><span>Item</span>
+            <input class="input" id="newItemName" placeholder="e.g. Plain flour" required autocomplete="off">
+          </label>
+          <label class="field"><span>Qty</span>
+            <input class="input" id="newItemQty" type="number" inputmode="decimal" min="0" step="any" value="1">
+          </label>
+          <label class="field"><span>Unit</span>
+            <input class="input" id="newItemUnit" list="unitList" placeholder="kg" autocomplete="off">
+          </label>
+        </div>
+        <datalist id="unitList">
+          <option value="kg"><option value="g"><option value="L"><option value="mL"><option value="ea">
+          <option value="doz"><option value="bunch"><option value="tin"><option value="pkt"><option value="btl">
+        </datalist>
+        <label class="field"><span>Section</span>
+          <select class="input" id="newItemCat"></select>
+        </label>
+        <button class="btn amber block" type="submit">Add to pantry</button>
+      </form>
+      <form id="catForm" class="sheet-inner" style="padding:0" hidden>
+        <label class="field"><span>Section name</span>
+          <input class="input" id="newCatName" placeholder="e.g. Cool room, Dry store, Freezer" required autocomplete="off">
+        </label>
+        <fieldset class="field" style="border:none;padding:0;margin:0">
+          <span>Board colour</span>
+          <div class="boards" id="boardPicks"></div>
+        </fieldset>
+        <button class="btn amber block" type="submit">Create section</button>
+      </form>
+    </div>
+  </div>
+</dialog>
+
+<!-- SETTINGS SHEET -->
+<dialog class="sheet" id="settingsSheet" aria-labelledby="setTitle">
+  <div class="sheet-inner">
+    <div class="grabber" aria-hidden="true"></div>
+    <div class="sheet-head">
+      <h2 id="setTitle">Settings</h2>
+      <button class="icon-btn" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <section class="settings-block">
+      <h3>Install on this device</h3>
+      <p class="hint" id="installState">Mise works offline once it's installed.</p>
+      <button class="btn amber" id="installBtn" hidden>Install Mise</button>
+      <ol class="steps" id="iosSteps" hidden>
+        <li>Tap the <b>Share</b> button in Safari.</li>
+        <li>Choose <b>Add to Home Screen</b>.</li>
+        <li>Tap <b>Add</b>. Mise opens full screen like any other app.</li>
+      </ol>
+      <ol class="steps" id="otherSteps" hidden>
+        <li>Open your browser menu (⋮ or ⋯).</li>
+        <li>Choose <b>Install app</b> or <b>Add to Home screen</b>.</li>
+      </ol>
+    </section>
+
+    <section class="settings-block">
+      <h3>Updates</h3>
+      <div class="kv"><span>Version</span><b id="versionLabel">—</b></div>
+      <p class="hint">Mise checks for a new version each time you open it and updates itself. Your notes and pantry stay put.</p>
+      <button class="btn ghost" id="checkUpdateBtn">Check for updates now</button>
+      <p class="hint" id="updateStatus" role="status"></p>
+    </section>
+
+    <section class="settings-block">
+      <h3>Photo reading</h3>
+      <p class="hint">Converting photos to a method uses your own Anthropic API key. It's stored only on this device.</p>
+      <label class="field"><span>Anthropic API key</span>
+        <input class="input" type="password" id="apiKeyInput" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+      </label>
+      <div class="row">
+        <button class="btn grow" id="saveKeyBtn">Save key</button>
+        <button class="btn ghost" id="clearKeyBtn">Clear</button>
+      </div>
+      <p class="hint" id="keyStatus" role="status"></p>
+    </section>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toastMsg"></span><button id="toastAction" hidden></button></div>
+<div id="printArea"></div>
+
+<script>
+const APP_VERSION = '__BUILD__';
+
+/* ---------- Storage ---------- */
+const LS_NOTES = 'bn_notes', LS_WF = 'bn_workflow', LS_KEY = 'bn_api_key', LS_PANTRY = 'pantry_data', LS_TAB = 'mise_tab';
+function load(key, fallback){
+  try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; }
+}
+function save(key, val){
+  try{ localStorage.setItem(key, JSON.stringify(val)); return true; }
+  catch(e){ toast('Storage is full. Delete a few photos so new changes can be saved.'); return false; }
+}
+function getApiKey(){ try{ return localStorage.getItem(LS_KEY) || ''; }catch(e){ return ''; } }
+
+let notes = load(LS_NOTES, []);                       // [{id,img,title,selected}]
+let workflow = load(LS_WF, { title:'', steps:[] });  // {title, steps:[{title,detail,temp,allergens}]}
+let pantry = load(LS_PANTRY, []);                    // [{id,name,open,color,items:[{id,name,qty,unit}]}]
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+
+const ICON = {
+  up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>',
+  down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  therm:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13.5V5a2 2 0 114 0v8.5a4 4 0 11-4 0z"/><path d="M12 9v6"/></svg>',
+  warn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h0"/></svg>',
+  chev:'<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'
+};
+
+// Colour-coded chopping boards, as used in commercial kitchens.
+const BOARDS = [
+  { id:'red',    hex:'#D23B2E', label:'Red · raw meat' },
+  { id:'blue',   hex:'#2F6FD0', label:'Blue · raw seafood' },
+  { id:'yellow', hex:'#E8B90E', label:'Yellow · cooked meat' },
+  { id:'green',  hex:'#3F9A48', label:'Green · fruit & veg' },
+  { id:'white',  hex:'#F4F4F0', label:'White · dairy & bakery' },
+  { id:'brown',  hex:'#8A5A36', label:'Brown · root veg' },
+  { id:'purple', hex:'#7B4FC0', label:'Purple · allergen-free' },
+  { id:'steel',  hex:'#8C959F', label:'Steel · dry store' }
+];
+const boardHex = (id) => (BOARDS.find(b => b.id === id) || BOARDS[BOARDS.length - 1]).hex;
+
+// Australia's mandatory allergen declarations (FSANZ).
+const ALLERGENS = ['Gluten','Dairy','Egg','Peanut','Tree nut','Soy','Fish','Shellfish','Sesame','Lupin','Sulphites'];
+
+/* ---------- Two-tap confirm (no native confirm dialogs) ---------- */
+function armed(btn, onConfirm, label){
+  if (btn.classList.contains('armed')) { onConfirm(); return; }
+  const prev = btn.innerHTML;
+  btn.classList.add('armed');
+  if (label) btn.textContent = label;
+  btn.setAttribute('aria-label', 'Tap again to confirm');
+  setTimeout(() => { if (btn.isConnected) { btn.classList.remove('armed'); btn.innerHTML = prev; btn.removeAttribute('aria-label'); } }, 2600);
+}
+
+/* ---------- Toast ---------- */
+let toastTimer;
+function toast(msg, opts = {}){
+  const el = $('#toast'), act = $('#toastAction');
+  $('#toastMsg').textContent = msg;
+  act.hidden = !opts.action;
+  if (opts.action){ act.textContent = opts.action; act.onclick = () => { el.hidden = true; opts.onAction(); }; }
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  if (!opts.sticky) toastTimer = setTimeout(() => { el.hidden = true; }, opts.ms || 3200);
+}
+
+/* ---------- Tabs ---------- */
+const TABS = ['notes','method','pantry'];
+const FAB_LABEL = { notes:'Add photo', method:'Add step', pantry:'Add stock' };
+let tab = TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : (load(LS_TAB, 'notes'));
+if (!TABS.includes(tab)) tab = 'notes';
+
+function setTab(t){
+  tab = t;
+  $$('[data-view]').forEach(v => { v.hidden = v.dataset.view !== t; });
+  $$('.tab').forEach(b => { if (b.dataset.tab === t) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+  $('#fabLabel').textContent = FAB_LABEL[t];
+  save(LS_TAB, t);
+  try{ history.replaceState(null, '', '#' + t); }catch(e){}
+  window.scrollTo(0, 0);
+}
+$$('.tab').forEach(b => b.onclick = () => setTab(b.dataset.tab));
+window.addEventListener('hashchange', () => { const t = location.hash.slice(1); if (TABS.includes(t) && t !== tab) setTab(t); });
+
+/* ---------- Sheets ---------- */
+const addSheet = $('#addSheet'), settingsSheet = $('#settingsSheet');
+function openSheet(d){ if (typeof d.showModal === 'function') d.showModal(); else d.setAttribute('open',''); }
+function closeSheet(d){ if (typeof d.close === 'function') d.close(); else d.removeAttribute('open'); }
+$$('dialog.sheet').forEach(d => {
+  d.addEventListener('click', (e) => { if (e.target === d || e.target.closest('[data-close]')) closeSheet(d); });
+});
+
+$('#fab').onclick = () => openAddSheet(tab);
+function openAddSheet(which, opts = {}){
+  $$('[data-add]', addSheet).forEach(el => { el.hidden = el.dataset.add !== which; });
+  $('#addTitle').textContent = { notes:'Add notes', method:'New step', pantry:'Add stock' }[which];
+  if (which === 'method'){
+    $('#stepForm').reset();
+    pickedAllergens.clear(); renderAllergenPicks();
+  }
+  if (which === 'pantry'){
+    fillCatSelect(opts.catId);
+    setPantryMode(opts.mode || (pantry.length ? 'item' : 'cat'));
+  }
+  openSheet(addSheet);
+  const focusEl = which === 'method' ? '#newStepTitle' : which === 'pantry' ? (pantryMode === 'cat' ? '#newCatName' : '#newItemName') : null;
+  if (focusEl) setTimeout(() => $(focusEl).focus(), 60);
+}
+
+/* =========================================================
+   NOTES
+   ========================================================= */
+const noteGrid = $('#noteGrid'), convertStatus = $('#convertStatus');
+const photoInput = $('#photoInput'), libraryInput = $('#libraryInput');
+let sampleFn = null, imagesOk = false, conversionReady = false;
+
+$('#takePhotoBtn').onclick = () => { closeSheet(addSheet); photoInput.click(); };
+$('#addPhotoBtn').onclick = () => { closeSheet(addSheet); libraryInput.click(); };
+photoInput.onchange = (e) => { const f = e.target.files[0]; if (f) addPhotoFile(f); photoInput.value = ''; };
+libraryInput.onchange = (e) => { Array.from(e.target.files || []).forEach(addPhotoFile); libraryInput.value = ''; };
+
+// Photos are scaled to 1600px on the long edge so dozens fit in on-device storage.
+function addPhotoFile(file){
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 1600, s = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      pushNote(c.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = () => pushNote(reader.result);
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+function pushNote(dataUrl){
+  notes.push({ id: uid(), img: dataUrl, title: '', selected: true });
+  if (!save(LS_NOTES, notes)) notes.pop();
+  renderNotes();
+  if (tab !== 'notes') setTab('notes');
+}
+
+function renderNotes(){
+  noteGrid.innerHTML = '';
+  $('#notesEmpty').hidden = notes.length > 0;
+  $('#noteToolbar').hidden = notes.length === 0;
+  $('#notesTag').textContent = plural(notes.length, 'photo');
+  notes.forEach(n => {
+    const card = document.createElement('article');
+    card.className = 'note' + (n.selected ? ' is-sel' : '');
+    card.innerHTML = `
+      <label class="note-sel"><input type="checkbox" id="sel-${n.id}" ${n.selected ? 'checked' : ''}><span class="sr">Select note</span></label>
+      <img src="${esc(n.img)}" alt="${esc(n.title || 'Photo of notes')}" loading="lazy">
+      <button class="note-del" aria-label="Delete note">${ICON.x.replace('<svg ','<svg width="14" height="14" ')}</button>
+      <button class="note-cvt" ${conversionReady ? '' : 'hidden'}>→ Method</button>
+      <input class="note-label" id="label-${n.id}" placeholder="Label, e.g. Hollandaise" value="${esc(n.title)}" autocomplete="off">
+    `;
+    $('.note-sel input', card).onchange = (ev) => { n.selected = ev.target.checked; card.classList.toggle('is-sel', n.selected); save(LS_NOTES, notes); updateNoteActions(); };
+    $('.note-del', card).onclick = (ev) => armed(ev.currentTarget, () => { notes = notes.filter(x => x.id !== n.id); save(LS_NOTES, notes); renderNotes(); }, 'Delete?');
+    $('.note-cvt', card).onclick = () => convertNotesToWorkflow([n]);
+    $('.note-label', card).oninput = (ev) => { n.title = ev.target.value; save(LS_NOTES, notes); };
+    noteGrid.appendChild(card);
+  });
+  updateNoteActions();
+}
+function updateNoteActions(){
+  const count = notes.filter(n => n.selected).length;
+  $('#selCount').textContent = count ? `${count} of ${notes.length} selected` : 'Tap the corner box to select photos';
+  $('#printNotesBtn').disabled = !count;
+  $('#convertBtn').disabled = !count || !conversionReady;
+}
+function showStatus(msg, isErr){
+  convertStatus.hidden = !msg;
+  convertStatus.textContent = msg || '';
+  convertStatus.classList.toggle('err', !!isErr);
+}
+
+function refreshConvertAvailability(){
+  conversionReady = !!(sampleFn && imagesOk) || !!getApiKey();
+  if (!conversionReady && notes.length) showStatus('Add your Anthropic API key in Settings to turn photos into methods.');
+  else if (convertStatus.textContent.startsWith('Add your')) showStatus('');
+  renderNotes();
+}
+
+function dataUrlToBlob(dataUrl){
+  const i = dataUrl.indexOf(','), mime = (dataUrl.slice(0, i).match(/data:([^;]+);base64/) || [])[1] || 'image/jpeg';
+  const bin = atob(dataUrl.slice(i + 1)), bytes = new Uint8Array(bin.length);
+  for (let k = 0; k < bin.length; k++) bytes[k] = bin.charCodeAt(k);
+  return new Blob([bytes], { type: mime });
+}
+
+async function callViaOwnKey(prompt, dataUrls){
+  const content = dataUrls.map(du => {
+    const i = du.indexOf(','), m = du.slice(0, i).match(/data:([^;]+);base64/);
+    return { type:'image', source:{ type:'base64', media_type: m ? m[1] : 'image/jpeg', data: du.slice(i + 1) } };
+  });
+  content.push({ type:'text', text: prompt });
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{
+      'content-type':'application/json',
+      'x-api-key': getApiKey(),
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1500, messages:[{ role:'user', content }] })
+  });
+  if (!res.ok){
+    const body = await res.json().catch(() => ({}));
+    const err = new Error('api_error');
+    err.code = res.status === 401 ? 'invalid_key' : res.status === 429 ? 'rate_limited' : 'api_error';
+    err.detail = body && body.error && body.error.message;
+    throw err;
+  }
+  const data = await res.json();
+  const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').replace(/```json|```/g, '').trim();
+  const a = text.indexOf('['), b = text.lastIndexOf(']');
+  if (a === -1 || b === -1){ const e = new Error('invalid_json'); e.code = 'invalid_json'; throw e; }
+  return JSON.parse(text.slice(a, b + 1));
+}
+
+async function convertNotesToWorkflow(chosen){
+  if (!chosen.length || !conversionReady) return;
+  if (!navigator.onLine){ showStatus('You\'re offline. Converting needs an internet connection.', true); return; }
+  $('#convertBtn').disabled = true;
+  showStatus('Reading your notes…');
+  try {
+    const prompt = 'The attached image(s) show handwritten or printed cooking method notes from a TAFE Certificate III Commercial Cookery class. ' +
+      'Read them and turn them into a step-by-step kitchen workflow. ' +
+      'Reply with ONLY a JSON array of step objects, no other text, each shaped like: ' +
+      '{"title": "short step name", "detail": "method / safety notes", "temp": "temperature or time if mentioned, else empty string", "allergens": "comma-separated allergens if mentioned, else empty string"}.';
+    let steps;
+    if (sampleFn && imagesOk) steps = await sampleFn.json(prompt, { images: chosen.map(n => dataUrlToBlob(n.img)), modelTier:'default' });
+    else steps = await callViaOwnKey(prompt, chosen.map(n => n.img));
+    if (!Array.isArray(steps) || !steps.length) throw new Error('empty');
+    workflow.steps = workflow.steps.concat(steps.map(s => ({
+      title: String(s.title || '').slice(0, 200),
+      detail: String(s.detail || '').slice(0, 2000),
+      temp: String(s.temp || '').slice(0, 100),
+      allergens: String(s.allergens || '').slice(0, 200)
+    })));
+    if (!workflow.title) workflow.title = chosen[0].title || 'Untitled method';
+    save(LS_WF, workflow);
+    renderWorkflow();
+    showStatus('');
+    setTab('method');
+    toast(`Added ${plural(steps.length, 'step')} from your notes`);
+  } catch (e) {
+    const code = e && e.code;
+    const msg = {
+      not_granted: 'Allow Claude access to use photo reading.',
+      images_unavailable: 'Photo reading isn\'t available here.',
+      rate_limited: 'Too many requests right now. Try again in a minute.',
+      image_rejected: 'That photo couldn\'t be used. Try a clearer or smaller image.',
+      refused: 'That photo couldn\'t be read. Try a clearer shot.',
+      invalid_key: 'Your API key was rejected. Make a new one at console.anthropic.com and paste it into Settings.' + (e.detail ? ` (${e.detail})` : ''),
+      api_error: 'Anthropic returned an error' + (e.detail ? `: ${e.detail}` : '') + '. If it mentions credit, add billing at console.anthropic.com.',
+      invalid_json: 'Couldn\'t make sense of the notes. Try a clearer photo.',
+      empty_completion: 'Couldn\'t make sense of the notes. Try a clearer photo.'
+    }[code] || `Couldn't read those notes (${code || 'error'}). Try again, or add the steps by hand.`;
+    showStatus(msg, true);
+  } finally {
+    updateNoteActions();
+  }
+}
+$('#convertBtn').onclick = () => convertNotesToWorkflow(notes.filter(n => n.selected));
+
+$('#printNotesBtn').onclick = () => {
+  const chosen = notes.filter(n => n.selected);
+  if (!chosen.length) return;
+  $('#printArea').innerHTML = '<h1>Notes</h1>' + chosen.map(n => `
+    <div class="print-note"><img src="${esc(n.img)}" alt="">${n.title ? `<p>${esc(n.title)}</p>` : ''}</div>`).join('');
+  window.print();
+};
+
+/* =========================================================
+   METHOD
+   ========================================================= */
+const stepList = $('#stepList'), wfTitle = $('#wfTitle');
+wfTitle.value = workflow.title || '';
+wfTitle.oninput = (e) => { workflow.title = e.target.value; save(LS_WF, workflow); };
+
+function renderWorkflow(){
+  stepList.innerHTML = '';
+  const n = workflow.steps.length;
+  $('#methodEmpty').hidden = n > 0;
+  $('#wfFoot').hidden = n === 0;
+  $('#methodTag').textContent = plural(n, 'step');
+  workflow.steps.forEach((s, i) => {
+    const t = document.createElement('article');
+    t.className = 'ticket';
+    t.innerHTML = `
+      <div class="num" aria-hidden="true">${String(i + 1).padStart(2, '0')}</div>
+      <div class="fields">
+        <label class="sr" for="st-${i}">Step ${i + 1} title</label>
+        <input class="stitle" id="st-${i}" placeholder="Step title" value="${esc(s.title)}" autocomplete="off">
+        <label class="sr" for="sd-${i}">Step ${i + 1} notes</label>
+        <textarea class="sdetail" id="sd-${i}" placeholder="Method / safety notes" rows="2">${esc(s.detail)}</textarea>
+        <div class="meta">
+          <label class="chip-field">${ICON.therm}<span class="sr">Temp or time</span>
+            <input class="temp" id="stt-${i}" placeholder="Temp / time" value="${esc(s.temp)}" autocomplete="off"></label>
+          <label class="chip-field allerg">${ICON.warn}<span class="sr">Allergens</span>
+            <input class="allerg" id="sa-${i}" placeholder="Allergens" value="${esc(s.allergens)}" autocomplete="off"></label>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="up" aria-label="Move step up" ${i === 0 ? 'disabled' : ''}>${ICON.up}</button>
+        <button class="down" aria-label="Move step down" ${i === n - 1 ? 'disabled' : ''}>${ICON.down}</button>
+        <button class="rm" aria-label="Remove step">${ICON.x}</button>
+      </div>`;
+    $('.stitle', t).oninput = (e) => { s.title = e.target.value; save(LS_WF, workflow); };
+    $('.sdetail', t).oninput = (e) => { s.detail = e.target.value; save(LS_WF, workflow); };
+    $('.temp', t).oninput = (e) => { s.temp = e.target.value; save(LS_WF, workflow); };
+    $('.allerg', t).oninput = (e) => { s.allergens = e.target.value; save(LS_WF, workflow); };
+    $('.up', t).onclick = () => { if (i > 0){ [workflow.steps[i-1], workflow.steps[i]] = [workflow.steps[i], workflow.steps[i-1]]; save(LS_WF, workflow); renderWorkflow(); } };
+    $('.down', t).onclick = () => { if (i < n - 1){ [workflow.steps[i+1], workflow.steps[i]] = [workflow.steps[i], workflow.steps[i+1]]; save(LS_WF, workflow); renderWorkflow(); } };
+    $('.rm', t).onclick = (e) => armed(e.currentTarget, () => { workflow.steps.splice(i, 1); save(LS_WF, workflow); renderWorkflow(); });
+    stepList.appendChild(t);
+  });
+}
+
+const pickedAllergens = new Set();
+function renderAllergenPicks(){
+  $('#allergenPicks').innerHTML = ALLERGENS.map(a =>
+    `<button type="button" data-a="${esc(a)}" aria-pressed="${pickedAllergens.has(a)}">${esc(a)}</button>`).join('');
+}
+$('#allergenPicks').onclick = (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  const a = b.dataset.a;
+  pickedAllergens.has(a) ? pickedAllergens.delete(a) : pickedAllergens.add(a);
+  b.setAttribute('aria-pressed', pickedAllergens.has(a));
+};
+$('#stepForm').onsubmit = (e) => {
+  e.preventDefault();
+  const title = $('#newStepTitle').value.trim();
+  if (!title) return;
+  workflow.steps.push({
+    title, detail: $('#newStepDetail').value.trim(), temp: $('#newStepTemp').value.trim(),
+    allergens: Array.from(pickedAllergens).join(', ')
+  });
+  save(LS_WF, workflow);
+  renderWorkflow();
+  closeSheet(addSheet);
+  toast(`Step ${workflow.steps.length} added`);
+  requestAnimationFrame(() => stepList.lastElementChild && stepList.lastElementChild.scrollIntoView({ behavior:'smooth', block:'center' }));
+};
+$('#clearWfBtn').onclick = (e) => armed(e.currentTarget, () => {
+  workflow = { title:'', steps:[] }; wfTitle.value = ''; save(LS_WF, workflow); renderWorkflow(); toast('Method cleared');
+}, 'Tap again to clear');
+
+$('#printWfBtn').onclick = () => {
+  $('#printArea').innerHTML = `<h1>${esc(workflow.title || 'Method')}</h1>` + workflow.steps.map((s, i) => `
+    <div class="print-step">
+      <h3>${i + 1}. ${esc(s.title || 'Untitled step')}</h3>
+      ${s.detail ? `<p>${esc(s.detail)}</p>` : ''}
+      ${(s.temp || s.allergens) ? `<p class="meta">${esc([s.temp, s.allergens ? 'Allergens: ' + s.allergens : ''].filter(Boolean).join('  ·  '))}</p>` : ''}
+    </div>`).join('');
+  window.print();
+};
+
+/* =========================================================
+   PANTRY
+   ========================================================= */
+const catList = $('#catList');
+let pantryMode = 'item';
+
+function fmtQty(q){ return Number.isInteger(q) ? q : Number(q.toFixed(2)); }
+function renderPantry(){
+  catList.innerHTML = '';
+  const allItems = pantry.flatMap(c => c.items);
+  const out = allItems.filter(i => i.qty <= 0).length;
+  $('#pantryEmpty').hidden = pantry.length > 0;
+  $('#stockStrip').hidden = pantry.length === 0;
+  $('#statItems').textContent = allItems.length;
+  $('#stat86').textContent = out;
+  $('#statCats').textContent = pantry.length;
+  $('#tab86').hidden = !out; $('#tab86').textContent = out;
+
+  pantry.forEach(cat => {
+    const n86 = cat.items.filter(i => i.qty <= 0).length;
+    const el = document.createElement('section');
+    el.className = 'cat';
+    el.style.setProperty('--board', boardHex(cat.color));
+    el.innerHTML = `
+      <button class="cat-head" aria-expanded="${!!cat.open}" aria-controls="cb-${cat.id}">
+        <span class="board" aria-hidden="true"></span>
+        <span class="titles"><h2>${esc(cat.name)}</h2><span class="sub">${plural(cat.items.length, 'item')}</span></span>
+        ${n86 ? `<span class="flag86">${n86} × 86</span>` : ''}
+        ${ICON.chev}
+      </button>
+      <div class="cat-body" id="cb-${cat.id}" ${cat.open ? '' : 'hidden'}></div>`;
+    $('.cat-head', el).onclick = () => { cat.open = !cat.open; save(LS_PANTRY, pantry); renderPantry(); };
+    const body = $('.cat-body', el);
+
+    if (!cat.items.length) body.insertAdjacentHTML('beforeend', '<p class="cat-empty">Nothing counted here yet.</p>');
+    cat.items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'item' + (item.qty <= 0 ? ' is86' : '');
+      row.innerHTML = `
+        <label class="sr" for="in-${item.id}">Item name</label>
+        <input class="iname" id="in-${item.id}" value="${esc(item.name)}" autocomplete="off">
+        <div class="stepper">
+          <button class="minus" aria-label="One less ${esc(item.name)}">−</button>
+          <output aria-live="polite">${item.qty <= 0 ? '86' : fmtQty(item.qty)}<small>${item.qty <= 0 ? '' : esc(item.unit || '')}</small></output>
+          <button class="plus" aria-label="One more ${esc(item.name)}">+</button>
+        </div>
+        <button class="del" aria-label="Remove ${esc(item.name)}">${ICON.x}</button>`;
+      $('.iname', row).oninput = (e) => { item.name = e.target.value; save(LS_PANTRY, pantry); };
+      $('.minus', row).onclick = () => { item.qty = Math.max(0, item.qty - 1); save(LS_PANTRY, pantry); renderPantry(); };
+      $('.plus', row).onclick = () => { item.qty = item.qty + 1; save(LS_PANTRY, pantry); renderPantry(); };
+      $('.del', row).onclick = (e) => armed(e.currentTarget, () => { cat.items = cat.items.filter(i => i.id !== item.id); save(LS_PANTRY, pantry); renderPantry(); });
+      body.appendChild(row);
+    });
+    body.insertAdjacentHTML('beforeend', `
+      <div class="cat-foot">
+        <button class="btn ghost add-here">+ Add item here</button>
+        <button class="btn danger rm-cat">Remove section</button>
+      </div>`);
+    $('.add-here', body).onclick = () => openAddSheet('pantry', { mode:'item', catId: cat.id });
+    $('.rm-cat', body).onclick = (e) => armed(e.currentTarget, () => { pantry = pantry.filter(c => c.id !== cat.id); save(LS_PANTRY, pantry); renderPantry(); toast(`Removed ${cat.name}`); }, 'Tap again to remove');
+    catList.appendChild(el);
+  });
+}
+
+function setPantryMode(m){
+  pantryMode = m;
+  $$('.seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m));
+  $('#itemForm').hidden = m !== 'item';
+  $('#catForm').hidden = m !== 'cat';
+  if (m === 'item' && !pantry.length){ $('#itemForm').hidden = true; $('#catForm').hidden = false; pantryMode = 'cat';
+    $$('.seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === 'cat'));
+    toast('Create a section first, then add stock to it.'); }
+}
+$$('.seg button').forEach(b => b.onclick = () => { setPantryMode(b.dataset.mode); $(pantryMode === 'cat' ? '#newCatName' : '#newItemName').focus(); });
+
+function fillCatSelect(selectedId){
+  $('#newItemCat').innerHTML = pantry.map(c => `<option value="${esc(c.id)}" ${c.id === selectedId ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
+}
+$('#boardPicks').innerHTML = BOARDS.map((b, i) => `
+  <label><input type="radio" name="board" value="${b.id}" ${i === BOARDS.length - 1 ? 'checked' : ''}>
+  <span class="board" style="--board:${b.hex}"></span>${esc(b.label)}</label>`).join('');
+
+$('#itemForm').onsubmit = (e) => {
+  e.preventDefault();
+  const name = $('#newItemName').value.trim();
+  const cat = pantry.find(c => c.id === $('#newItemCat').value);
+  if (!name || !cat) return;
+  cat.items.push({ id: uid(), name, qty: Math.max(0, Number($('#newItemQty').value) || 0), unit: $('#newItemUnit').value.trim() });
+  cat.open = true;
+  save(LS_PANTRY, pantry); renderPantry();
+  toast(`${name} added to ${cat.name}`);
+  $('#newItemName').value = ''; $('#newItemQty').value = 1;
+  $('#newItemName').focus(); // keep the sheet open for fast counting
+};
+$('#catForm').onsubmit = (e) => {
+  e.preventDefault();
+  const name = $('#newCatName').value.trim();
+  if (!name) return;
+  const color = (document.querySelector('input[name="board"]:checked') || {}).value || 'steel';
+  const cat = { id: uid(), name, open: true, color, items: [] };
+  pantry.push(cat);
+  save(LS_PANTRY, pantry); renderPantry();
+  $('#newCatName').value = '';
+  fillCatSelect(cat.id);
+  setPantryMode('item');
+  $('#newItemName').focus();
+  toast(`${name} created. Now add some stock.`);
+};
+
+/* =========================================================
+   SETTINGS: API key
+   ========================================================= */
+$('#settingsBtn').onclick = () => { $('#apiKeyInput').value = getApiKey(); openSheet(settingsSheet); };
+$('#saveKeyBtn').onclick = () => {
+  const cleaned = $('#apiKeyInput').value.replace(/[\s​-‍﻿]/g, '');
+  try{ localStorage.setItem(LS_KEY, cleaned); }catch(e){}
+  $('#apiKeyInput').value = cleaned;
+  const ks = $('#keyStatus');
+  if (!cleaned.startsWith('sk-ant-')) ks.textContent = "That doesn't look like an Anthropic key. It should start with sk-ant-";
+  else if (cleaned.includes('.') || cleaned.length < 90) ks.textContent = `Saved, but it looks shortened (${cleaned.length} characters). A full key is about 108 characters. Create a new key and copy it straight away.`;
+  else ks.textContent = `Key saved: ${cleaned.slice(0, 14)}…${cleaned.slice(-4)}`;
+  refreshConvertAvailability();
+};
+$('#clearKeyBtn').onclick = () => {
+  try{ localStorage.removeItem(LS_KEY); }catch(e){}
+  $('#apiKeyInput').value = ''; $('#keyStatus').textContent = 'Key removed from this device.';
+  refreshConvertAvailability();
+};
+
+/* =========================================================
+   INSTALL (download like a normal app)
+   ========================================================= */
+let deferredPrompt = null;
+const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+function refreshInstallUI(){
+  const installed = isStandalone();
+  $('#installChip').hidden = installed || !deferredPrompt;
+  $('#installBtn').hidden = installed || !deferredPrompt;
+  $('#iosSteps').hidden = installed || !isIOS;
+  $('#otherSteps').hidden = installed || isIOS || !!deferredPrompt;
+  $('#installState').textContent = installed
+    ? 'Installed. Mise opens from your home screen and works offline.'
+    : isIOS ? 'Add Mise to your home screen to use it like a normal app, offline too.'
+    : 'Install Mise to get its own icon, a full-screen window and offline use.';
+}
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; refreshInstallUI(); });
+window.addEventListener('appinstalled', () => { deferredPrompt = null; refreshInstallUI(); toast('Mise is installed. Find it on your home screen.'); });
+async function promptInstall(){
+  if (!deferredPrompt){ openSheet(settingsSheet); return; }
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice.catch(() => null);
+  deferredPrompt = null; refreshInstallUI();
+}
+$('#installChip').onclick = promptInstall;
+$('#installBtn').onclick = promptInstall;
+
+/* =========================================================
+   AUTO-UPDATE
+   The service worker installs each new deploy in the background and takes
+   over straight away. When that happens we reload onto the new version,
+   unless you're mid-edit, in which case it waits until you leave the app.
+   ========================================================= */
+let swReg = null, pendingReload = false;
+$('#versionLabel').textContent = APP_VERSION.startsWith('__') ? 'dev' : APP_VERSION;
+
+function doReload(){ try{ sessionStorage.setItem('mise_updated', '1'); }catch(e){} location.reload(); }
+function applyUpdate(){
+  const a = document.activeElement;
+  const busy = document.querySelector('dialog[open]') || (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));
+  if (!busy) { doReload(); return; }
+  pendingReload = true;
+  toast('A new version of Mise is ready.', { action:'Update now', onAction: doReload, sticky:true });
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden' && pendingReload) doReload();
+  if (document.visibilityState === 'visible' && swReg) swReg.update().catch(() => {});
+});
+
+if ('serviceWorker' in navigator && location.protocol !== 'file:'){
+  let hasController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hasController){ hasController = true; return; }  // first install, nothing to refresh
+    applyUpdate();
+  });
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      swReg = reg;
+      setInterval(() => reg.update().catch(() => {}), 30 * 60 * 1000);
+    }).catch(() => {});
+  });
+}
+$('#checkUpdateBtn').onclick = async () => {
+  const st = $('#updateStatus');
+  if (!swReg){ st.textContent = 'Updates run once Mise is opened from its web address.'; return; }
+  st.textContent = 'Checking…';
+  try{
+    await swReg.update();
+    st.textContent = swReg.installing || swReg.waiting ? 'Downloading the new version…' : 'You have the latest version.';
+  }catch(e){ st.textContent = navigator.onLine ? 'Couldn\'t reach the server. Try again shortly.' : 'You\'re offline. Mise will check when you reconnect.'; }
+};
+try{
+  if (sessionStorage.getItem('mise_updated')){ sessionStorage.removeItem('mise_updated'); setTimeout(() => toast('Mise updated to the latest version'), 400); }
+}catch(e){}
+
+/* ---------- Boot ---------- */
+$('#docketDate').textContent = 'EN PLACE · ' + new Date().toLocaleDateString('en-AU', { weekday:'short', day:'numeric', month:'short' }).toUpperCase().replace(/,/g, '');
+renderAllergenPicks();
+renderNotes();
+renderWorkflow();
+renderPantry();
+setTab(tab);
+refreshInstallUI();
+
+(async () => {
+  try{
+    sampleFn = window.claude ? await window.claude.use('sample') : null;
+    if (sampleFn){ const limits = await sampleFn.limits().catch(() => null); imagesOk = !!(limits && limits.images); }
+  }catch(e){ sampleFn = null; }
+  refreshConvertAvailability();
+})();
+</script>
+</body>
+</html>
