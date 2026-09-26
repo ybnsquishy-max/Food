@@ -1,9 +1,9 @@
-name: Deploy Mise app
+name: Deploy Apps (Mise + Wind & Tide)
 
 on:
   push:
     branches: [main]
-    paths: ['app/**', '.github/workflows/deploy-app.yml']
+    paths: ['app/**', 'wind-tide/**', '.github/workflows/deploy.yml']
   workflow_dispatch:
 
 permissions:
@@ -23,17 +23,18 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-
-      # Stamp a unique build id into the service worker and page. A changed
-      # sw.js is what tells installed copies of the app to update themselves.
-      - name: Stamp build version
+      - name: Stamp and prepare
         run: |
           BUILD="$(date -u +%Y.%m.%d-%H%M)-${GITHUB_SHA::7}"
           mkdir -p _site
+          # Deploy Mise
           cp -r app/. _site/
           sed -i "s/__BUILD__/${BUILD}/g" _site/sw.js _site/index.html
+          # Deploy Wind & Tide
+          mkdir -p _site/wind-tide
+          cp -r wind-tide/. _site/wind-tide/
+          sed -i "s/__BUILD__/${BUILD}/g" _site/wind-tide/sw.js _site/wind-tide/index.html
           echo "Built ${BUILD}"
-
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
