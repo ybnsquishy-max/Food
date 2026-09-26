@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+<title>Wind & Tide Watch</title>
+<meta name="description" content="Live wind and tide forecasts with alarms for any coastline. Know before you go.">
+<meta name="theme-color" content="#0A2233" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A2233" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wind Tide">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='10' r='6' fill='%23E3A94F'/><path d='M8 18 Q16 14 24 18' stroke='%23EDEBDF' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-deep:#0A2233;
+    --navy-panel:#0F3049;
+    --navy-panel-2:#153A55;
+    --paper:#E7DFC6;
+    --paper-dim:#D8CDAE;
+    --brass:#C68A3D;
+    --brass-bright:#E3A94F;
+    --ink:#0A2233;
+    --fog:#9FB8C8;
+    --fog-dim:#6E8EA0;
+    --white-ish:#EDEBDF;
+    --danger:#C1443C;
+    --danger-bright:#E85C50;
+    --safe-teal:#3FA79A;
+    --grid-line:rgba(159,184,200,0.14);
+    --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--navy-deep);
+    background-image:
+      radial-gradient(circle at 15% -10%, rgba(63,167,154,0.08), transparent 45%),
+      radial-gradient(circle at 100% 10%, rgba(198,138,61,0.06), transparent 40%);
+    color:var(--white-ish);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding-bottom:60px;
+    padding-top:env(safe-area-inset-top, 0px);
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .display{font-family:'Bebas Neue',sans-serif; letter-spacing:0.03em;}
+
+  /* ---------- header + install ---------- */
+  header{
+    padding:22px 18px 12px;
+    border-bottom:1px solid rgba(159,184,200,0.18);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .header-left{flex:1;min-width:0;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.22em;
+    color:var(--brass-bright);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .eyebrow::before{content:'⚓';font-size:12px;}
+  h1.display{
+    font-size:36px;
+    margin:2px 0 0;
+    color:var(--white-ish);
+    line-height:0.95;
+  }
+
+  .install-btn{
+    background:var(--brass);
+    color:var(--ink);
+    border:none;
+    padding:10px 14px;
+    border-radius:6px;
+    font-weight:600;
+    font-size:13px;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:all 0.15s ease;
+  }
+  .install-btn:hover{background:var(--brass-bright);}
+  .install-btn:active{transform:scale(0.96);}
+
+  .locbar{
+    display:flex;
+    gap:8px;
+    margin-top:12px;
+    flex-wrap:wrap;
+    width:100%;
+  }
+  input[type=text]{
+    flex:1;
+    min-width:160px;
+    background:var(--navy-panel);
+    border:1px solid rgba(159,184,200,0.25);
+    color:var(--white-ish);
+    padding:10px 12px;
+    border-radius:4px;
+    font-size:13.5px;
+    font-family:'Inter',sans-serif;
+    transition:all 0.2s ease;
+  }
+  input[type=text]::placeholder{color:var(--fog-dim);}
+  input[type=text]:focus{
+    outline:none;
+    border-color:var(--brass-bright);
+    box-shadow:0 0 0 2px rgba(227,169,79,0.2);
+  }
+  button{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    border:none;
+    border-radius:4px;
+    padding:10px 14px;
+    cursor:pointer;
+    transition:all 0.15s ease;
+  }
+  button:active{transform:scale(0.97);}
+  .btn-brass{background:var(--brass); color:var(--ink);}
+  .btn-brass:hover{background:var(--brass-bright);}
+  .btn-ghost{background:transparent; color:var(--fog); border:1px solid rgba(159,184,200,0.3);}
+  .btn-ghost:hover{color:var(--white-ish); border-color:var(--fog);}
+  .btn-small{padding:7px 11px; font-size:12.5px;}
+
+  #searchResults{
+    margin-top:8px;
+    background:var(--navy-panel);
+    border:1px solid rgba(159,184,200,0.25);
+    border-radius:4px;
+    overflow:hidden;
+    display:none;
+    max-height:240px;
+    overflow-y:auto;
+  }
+  #searchResults .result{
+    padding:10px 14px;
+    font-size:13.5px;
+    cursor:pointer;
+    border-bottom:1px solid rgba(159,184,200,0.12);
+    transition:background 0.1s ease;
+  }
+  #searchResults .result:last-child{border-bottom:none;}
+  #searchResults .result:hover{background:var(--navy-panel-2);}
+  #searchResults .result .rname{color:var(--white-ish); font-weight:600;}
+  #searchResults .result .rmeta{color:var(--fog-dim); font-size:11.5px; margin-top:1px;}
+
+  .station-tag{
+    margin-top:10px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:13px;
+    color:var(--fog);
+    flex-wrap:wrap;
+  }
+  .station-tag .name{color:var(--brass-bright); font-weight:600;}
+  .station-tag .coords{color:var(--fog-dim);}
+  .station-tag button{padding:6px 10px;font-size:12px;}
+
+  main{max-width:760px; margin:0 auto; padding:0 18px;}
+
+  .empty-state{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--fog);
+  }
+  .empty-state .display{font-size:26px; color:var(--white-ish); margin-bottom:6px;}
+
+  /* ---------- panels ---------- */
+  .instruments{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-top:20px;
+  }
+  @media(max-width:480px){ .instruments{grid-template-columns:1fr;} }
+
+  .panel{
+    background:var(--navy-panel);
+    border:1px solid rgba(159,184,200,0.18);
+    border-radius:8px;
+    padding:16px;
+    position:relative;
+    transition:border-color 0.2s ease;
+  }
+  .panel:hover{border-color:rgba(159,184,200,0.28);}
+  .panel-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:var(--fog-dim);
+    margin-bottom:12px;
+  }
+
+  .compass-wrap{display:flex; align-items:center; gap:16px;}
+  .compass{width:112px; height:112px; position:relative; flex-shrink:0;}
+  .compass svg{width:100%; height:100%; display:block;}
+  .wind-readout .val{font-size:36px; line-height:1; font-weight:600;}
+  .wind-readout .unit{font-size:14px; color:var(--fog); margin-left:4px;}
+  .wind-readout .sub{font-size:12px; color:var(--fog-dim); margin-top:4px;}
+  .wind-readout .dir{color:var(--brass-bright); font-weight:700;}
+
+  .tide-readout .val{font-size:36px; line-height:1; font-weight:600;}
+  .tide-readout .unit{font-size:14px; color:var(--fog); margin-left:4px;}
+  .tide-readout .trend{
+    display:inline-flex; align-items:center; gap:5px;
+    font-size:12.5px; margin-top:6px; padding:4px 10px;
+    border-radius:20px; font-weight:600;
+  }
+  .trend.rising{background:rgba(63,167,154,0.16); color:var(--safe-teal);}
+  .trend.falling{background:rgba(198,138,61,0.16); color:var(--brass-bright);}
+
+  .weather-wrap{display:flex; align-items:center; gap:16px;}
+  .weather-icon{font-size:48px; line-height:1; flex-shrink:0;}
+  .weather-readout .val{font-size:36px; line-height:1; font-weight:600;}
+  .weather-readout .unit{font-size:14px; color:var(--fog); margin-left:4px;}
+  .weather-readout .desc{font-size:13px; color:var(--fog); margin-top:2px;}
+  .weather-readout .sub{font-size:12px; color:var(--fog-dim); margin-top:6px;}
+
+  .sun-row{display:flex; gap:10px; margin-top:10px;}
+  .sun-item{
+    flex:1; display:flex; align-items:center; gap:12px;
+    background:var(--navy-panel-2);
+    border:1px solid rgba(159,184,200,0.16);
+    border-radius:6px;
+    padding:12px 14px;
+    transition:background 0.2s ease;
+  }
+  .sun-item:hover{background:rgba(159,184,200,0.08);}
+  .sun-item .icon{font-size:28px; flex-shrink:0;}
+  .sun-item .label{font-size:10.5px; text-transform:uppercase; letter-spacing:0.1em; color:var(--fog-dim);}
+  .sun-item .time{font-family:'IBM Plex Mono',monospace; font-size:20px; margin-top:2px; color:var(--white-ish); font-weight:600;}
+  .sun-daylen{margin-top:10px; font-size:12px; color:var(--fog-dim); text-align:center;}
+
+  .countdown-block{
+    text-align:center;
+    padding:12px 8px 18px;
+    border-bottom:1px solid rgba(159,184,200,0.15);
+    margin-bottom:14px;
+  }
+  .countdown-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    color:var(--fog-dim);
+  }
+  .countdown-big{
+    font-size:54px;
+    font-weight:700;
+    color:var(--brass-bright);
+    letter-spacing:0.02em;
+    line-height:1.1;
+    margin-top:4px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  @media(max-width:400px){ .countdown-big{ font-size:42px; } }
+
+  canvas{width:100%; height:150px; display:block; border-radius:6px;}
+
+  .tide-list{display:flex; gap:10px; overflow-x:auto; margin-top:12px; padding-bottom:4px;}
+  .tide-chip{
+    background:var(--navy-panel-2);
+    border:1px solid rgba(159,184,200,0.18);
+    border-radius:6px;
+    padding:10px 12px;
+    min-width:100px;
+    flex-shrink:0;
+    transition:all 0.2s ease;
+  }
+  .tide-chip:hover{border-color:var(--brass-bright);}
+  .tide-chip .kind{font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--brass-bright); font-weight:700;}
+  .tide-chip .time{font-family:'IBM Plex Mono',monospace; font-size:14px; margin-top:3px; font-weight:600;}
+  .tide-chip .ht{font-size:11px; color:var(--fog-dim); margin-top:2px;}
+
+  .section-title{
+    display:flex; align-items:baseline; gap:8px; margin:28px 0 14px;
+  }
+  .section-title .display{font-size:22px;}
+  .section-title .count{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--fog-dim);}
+
+  .alarm-card{
+    background:var(--navy-panel);
+    border:1px solid rgba(159,184,200,0.18);
+    border-radius:8px;
+    padding:16px;
+    margin-bottom:12px;
+    transition:border-color 0.2s ease;
+  }
+  .alarm-card:hover{border-color:rgba(159,184,200,0.28);}
+  .alarm-row{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .alarm-title{font-weight:600; font-size:15px;}
+  .alarm-desc{color:var(--fog); font-size:12.5px; margin-top:2px;}
+
+  .switch{position:relative; width:48px; height:26px; flex-shrink:0;}
+  .switch input{opacity:0; width:0; height:0;}
+  .switch .track{
+    position:absolute; inset:0; background:rgba(159,184,200,0.2);
+    border-radius:20px; cursor:pointer; transition:all 0.2s ease;
+    border:1px solid rgba(159,184,200,0.3);
+  }
+  .switch .track::before{
+    content:''; position:absolute; width:20px; height:20px; left:3px; top:3px;
+    background:var(--white-ish); border-radius:50%; transition:transform 0.2s ease;
+  }
+  .switch input:checked + .track{background:var(--safe-teal); border-color:var(--safe-teal);}
+  .switch input:checked + .track::before{transform:translateX(22px);}
+
+  .alarm-config{
+    display:none;
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px solid rgba(159,184,200,0.15);
+    gap:12px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .alarm-config.open{display:flex;}
+  .field{display:flex; flex-direction:column; gap:5px;}
+  .field label{font-size:11px; color:var(--fog-dim); text-transform:uppercase; letter-spacing:0.08em;}
+  select, input[type=number]{
+    background:var(--navy-panel-2);
+    border:1px solid rgba(159,184,200,0.25);
+    color:var(--white-ish);
+    padding:8px 10px;
+    border-radius:4px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    transition:all 0.2s ease;
+  }
+  select:focus, input[type=number]:focus{
+    outline:none;
+    border-color:var(--brass-bright);
+    box-shadow:0 0 0 2px rgba(227,169,79,0.15);
+  }
+  input[type=number]{width:70px;}
+
+  .log-entry{
+    display:flex; gap:10px; padding:8px 0;
+    border-bottom:1px solid rgba(159,184,200,0.1);
+    font-size:12.5px;
+  }
+  .log-entry:last-child{border-bottom:none;}
+  .log-entry .time{color:var(--fog-dim); font-family:'IBM Plex Mono',monospace; flex-shrink:0; font-weight:500;}
+  .log-empty{color:var(--fog-dim); font-size:13px; padding:8px 0;}
+
+  #klaxon{
+    position:fixed; left:50%; bottom:20px; transform:translateX(-50%);
+    background:var(--danger); color:#fff;
+    padding:14px 18px; border-radius:8px;
+    display:none; align-items:center; gap:12px;
+    max-width:90%; box-shadow:0 12px 32px rgba(0,0,0,0.5);
+    z-index:9999;
+  }
+  #klaxon.show{display:flex; animation:pulse 1.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 12px 32px rgba(0,0,0,0.5);} 50%{box-shadow:0 12px 32px rgba(225,60,50,0.8);}}
+  #klaxon .msg{font-size:13.5px; font-weight:600;}
+  #klaxon button{background:rgba(255,255,255,0.25); color:#fff; padding:7px 12px; font-size:12px;}
+
+  #toast{
+    position:fixed; left:50%; bottom:20px; transform:translateX(-50%);
+    background:rgba(10,34,51,0.95); color:var(--white-ish); border:1px solid rgba(159,184,200,0.3);
+    padding:11px 16px; border-radius:8px; font-size:13px; max-width:90%;
+    z-index:9998; display:none; text-align:center; backdrop-filter:blur(4px);
+  }
+
+  footer{
+    text-align:center; color:var(--fog-dim); font-size:11px;
+    margin-top:32px; padding:0 18px 20px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="eyebrow">Wind &amp; Tide Watch</div>
+    <h1 class="display">Know before you go.</h1>
+  </div>
+  <button class="install-btn" id="installChip" hidden>📲 Install</button>
+</header>
+
+<div style="padding:0 18px;">
+  <div class="locbar">
+    <input type="text" id="searchInput" placeholder="Search port, bay, or place…" autocomplete="off">
+    <button class="btn-brass" id="searchBtn">Search</button>
+    <button class="btn-ghost btn-small" id="geoBtn">📍 Position</button>
+    <button class="btn-ghost btn-small" id="coordToggleBtn">🧭 Coords</button>
+  </div>
+  <div id="coordRow" class="locbar" style="display:none; margin-top:8px;">
+    <input type="text" id="coordLat" placeholder="Latitude" inputmode="decimal" style="flex:1; min-width:100px;">
+    <input type="text" id="coordLon" placeholder="Longitude" inputmode="decimal" style="flex:1; min-width:100px;">
+    <button class="btn-brass btn-small" id="coordGoBtn">Go</button>
+  </div>
+  <div id="searchResults"></div>
+  <div class="station-tag" id="stationTag" style="display:none;">
+    <span>📍</span>
+    <div>
+      <div class="name" id="stationName">—</div>
+      <div class="coords mono" id="stationCoords" style="font-size:11px;"></div>
+    </div>
+    <button class="btn-ghost btn-small" id="refreshBtn" style="margin-left:auto;">Refresh</button>
+  </div>
+</div>
+
+<main>
+  <div id="emptyState" class="empty-state">
+    <div class="display" style="font-size:28px; margin-bottom:8px;">⛵</div>
+    <div class="display">No location set</div>
+    <div style="margin-top:6px; color:var(--fog);">Search for a place above to watch wind and tide.</div>
+  </div>
+
+  <div id="dataView" style="display:none;">
+    <div class="instruments">
+      <div class="panel" id="windPanel">
+        <div class="panel-label">Wind · now</div>
+        <div class="compass-wrap">
+          <div class="compass">
+            <svg viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(159,184,200,0.25)" stroke-width="1.5"/>
+              <text x="50" y="12" text-anchor="middle" fill="#9FB8C8" font-size="8" font-family="IBM Plex Mono" font-weight="600">N</text>
+              <text x="90" y="53" text-anchor="middle" fill="#9FB8C8" font-size="8" font-family="IBM Plex Mono">E</text>
+              <text x="50" y="93" text-anchor="middle" fill="#9FB8C8" font-size="8" font-family="IBM Plex Mono">S</text>
+              <text x="10" y="53" text-anchor="middle" fill="#9FB8C8" font-size="8" font-family="IBM Plex Mono">W</text>
+              <g id="needle" transform="rotate(0 50 50)">
+                <polygon points="50,14 45,52 55,52" fill="#E3A94F"/>
+                <polygon points="50,86 45,52 55,52" fill="#6E8EA0"/>
+                <circle cx="50" cy="50" r="4.5" fill="#EDEBDF"/>
+              </g>
+            </svg>
+          </div>
+          <div class="wind-readout">
+            <div><span class="val mono" id="windSpeed">--</span><span class="unit" id="windUnitLbl">kn</span></div>
+            <div class="sub">gusting <span id="windGust">--</span> · from <span class="dir" id="windDirLbl">--</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" id="tidePanel">
+        <div class="panel-label">Sea level · now</div>
+        <div class="tide-readout">
+          <div><span class="val mono" id="tideNow">--</span><span class="unit" id="tideUnitLbl">m</span></div>
+          <div><span class="trend" id="tideTrend">—</span></div>
+          <div class="sub" id="waveInfo" style="margin-top:8px;">wave height —</div>
+        </div>
+      </div>
+
+      <div class="panel" id="weatherPanel">
+        <div class="panel-label">Current weather</div>
+        <div class="weather-wrap">
+          <div class="weather-icon" id="wxIcon">—</div>
+          <div class="weather-readout">
+            <div><span class="val mono" id="wxTemp">--</span><span class="unit">°C</span></div>
+            <div class="desc" id="wxDesc">—</div>
+            <div class="sub">feels <span id="wxFeels">--</span>° · <span id="wxHumidity">--</span>% humidity</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" id="sunPanel">
+        <div class="panel-label">Sunrise &amp; sunset</div>
+        <div class="sun-row">
+          <div class="sun-item">
+            <span class="icon">🌅</span>
+            <div>
+              <div class="label">Sunrise</div>
+              <div class="time" id="sunriseTime">--:--</div>
+            </div>
+          </div>
+          <div class="sun-item">
+            <span class="icon">🌇</span>
+            <div>
+              <div class="label">Sunset</div>
+              <div class="time" id="sunsetTime">--:--</div>
+            </div>
+          </div>
+        </div>
+        <div class="sun-daylen" id="sunDaylen">daylight —</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
+        <div class="panel-label" style="margin-bottom:0;">48-hour tide · next event</div>
+      </div>
+      <div class="countdown-block">
+        <div class="countdown-label">Next <span id="countdownKind">tide</span> in</div>
+        <div class="countdown-big mono" id="countdownBig">--:--:--</div>
+        <div style="font-size:13px; color:var(--fog); margin-top:4px;" id="countdownSub">—</div>
+      </div>
+      <canvas id="plotter"></canvas>
+      <div class="tide-list" id="tideList"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">48-hour wind trend</div>
+      <canvas id="windPlotter"></canvas>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">48-hour wave height</div>
+      <canvas id="wavePlotter"></canvas>
+    </div>
+
+    <div style="display:flex; gap:12px; margin:18px 0; flex-wrap:wrap;">
+      <div class="field"><label for="windUnitSel">Wind unit</label><select id="windUnitSel"><option value="kn">Knots</option><option value="mph">mph</option><option value="kmh">km/h</option><option value="ms">m/s</option></select></div>
+      <div class="field"><label for="tideUnitSel">Tide unit</label><select id="tideUnitSel"><option value="m">Metres</option><option value="ft">Feet</option></select></div>
+    </div>
+
+    <div class="section-title">
+      <span class="display">Alarms</span>
+      <span class="count mono" id="alarmCount">0 active</span>
+    </div>
+
+    <div class="alarm-card">
+      <div class="alarm-row">
+        <div>
+          <div class="alarm-title">Wind speed</div>
+          <div class="alarm-desc">Alert when wind hits your threshold</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="windAlarmToggle"><span class="track"></span></label>
+      </div>
+      <div class="alarm-config" id="windAlarmConfig">
+        <div class="field"><label for="windThreshold">Alert above</label><input type="number" id="windThreshold" min="0" step="1" value="20"></div>
+        <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--fog);"><input type="checkbox" id="windGustToo"> also gusts</label>
+      </div>
+    </div>
+
+    <div class="alarm-card">
+      <div class="alarm-row">
+        <div>
+          <div class="alarm-title">Tide turn</div>
+          <div class="alarm-desc">Get warned ahead of high or low tide</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="tideAlarmToggle"><span class="track"></span></label>
+      </div>
+      <div class="alarm-config" id="tideAlarmConfig">
+        <div class="field"><label for="tideWhich">Warn before</label><select id="tideWhich"><option value="both">High &amp; low</option><option value="high">High only</option><option value="low">Low only</option></select></div>
+        <div class="field"><label for="tideOffset">Minutes ahead</label><input type="number" id="tideOffset" min="0" step="5" value="30"></div>
+      </div>
+    </div>
+
+    <div class="section-title"><span class="display">Log</span></div>
+    <div class="panel" id="logPanel">
+      <div class="log-empty" id="logEmpty">Nothing yet — alarms will appear here</div>
+      <div id="logList"></div>
+    </div>
+  </div>
+</main>
+
+<footer>Wind &amp; tide from <strong>Open-Meteo</strong> · tide values are modelled, cross-check before navigation</footer>
+
+<div id="klaxon">
+  <span class="msg" id="klaxonMsg"></span>
+  <button id="klaxonDismiss">Dismiss</button>
+</div>
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvg/2.1.2/canvg.min.js"></script>
+<!-- Original Wind & Tide Watch script -->
+<script>
+/* =========================================================
+   STATE
+========================================================= */
+let state = {
+  location: null,
+  windUnit: 'kn',
+  tideUnit: 'm',
+  alarms: { wind: { enabled:false, threshold:20, gustToo:false }, tide: { enabled:false, which:'both', offsetMin:30 } },
+  triggered: {},
+  log: []
+};
+
+let weatherData = null, marineData = null, tideExtrema = [], utcOffsetSeconds = 0, audioCtx = null;
+const LOCAL_KEY = 'wind-tide-watch-state';
+let storageMode = 'local';
+
+async function loadState(){
+  try{
+    const raw = localStorage.getItem(LOCAL_KEY);
+    if(raw) Object.assign(state, JSON.parse(raw));
+  }catch(e){}
+  afterLoad();
+}
+
+async function saveState(){
+  try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+function afterLoad(){
+  document.getElementById('windUnitSel').value = state.windUnit;
+  document.getElementById('tideUnitSel').value = state.tideUnit;
+  document.getElementById('windAlarmToggle').checked = state.alarms.wind.enabled;
+  document.getElementById('windThreshold').value = state.alarms.wind.threshold;
+  document.getElementById('windGustToo').checked = state.alarms.wind.gustToo;
+  document.getElementById('tideAlarmToggle').checked = state.alarms.tide.enabled;
+  document.getElementById('tideWhich').value = state.alarms.tide.which;
+  document.getElementById('tideOffset').value = state.alarms.tide.offsetMin;
+  syncAlarmConfigVisibility();
+  renderLog();
+  if(state.location){
+    setStationTag();
+    fetchAll();
+  }
+}
+
+function showToast(msg, duration){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(()=>{ t.style.display = 'none'; }, duration || 3500);
+}
+
+function soundKlaxon(msg){
+  document.getElementById('klaxonMsg').textContent = msg;
+  document.getElementById('klaxon').classList.add('show');
+  playTone();
+  try{
+    if('Notification' in window && Notification.permission === 'granted'){
+      new Notification('Wind & Tide Watch', { body: msg });
+    }
+  }catch(e){}
+  appendLog(msg);
+}
+
+document.getElementById('klaxonDismiss').addEventListener('click', ()=>{
+  document.getElementById('klaxon').classList.remove('show');
+});
+
+function playTone(){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = audioCtx.currentTime;
+    [0, 0.35].forEach(offset=>{
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.0001, now + offset);
+      gain.gain.exponentialRampToValueAtTime(0.25, now + offset + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.28);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(now + offset);
+      osc.stop(now + offset + 0.3);
+    });
+  }catch(e){}
+}
+
+function appendLog(text){
+  state.log.unshift({ time: Date.now(), text });
+  state.log = state.log.slice(0, 30);
+  renderLog();
+  saveState();
+}
+
+function renderLog(){
+  const list = document.getElementById('logList');
+  const empty = document.getElementById('logEmpty');
+  if(!state.log.length){ empty.style.display='block'; list.innerHTML=''; return; }
+  empty.style.display='none';
+  list.innerHTML = state.log.map(e=>{
+    const d = new Date(e.time);
+    const t = d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `<div class="log-entry"><span class="time">${t}</span><span>${escapeHtml(e.text)}</span></div>`;
+  }).join('');
+}
+
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function wallClockToMs(str){
+  const [datePart, timePart] = str.split('T');
+  const [y,mo,d] = datePart.split('-').map(Number);
+  const [h,mi] = timePart.split(':').map(Number);
+  return Date.UTC(y, mo-1, d, h, mi);
+}
+
+function nowWallClockMs(){ return Date.now() + utcOffsetSeconds*1000; }
+
+function formatWallClock(ms, opts){
+  const d = new Date(ms);
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const hh = String(d.getUTCHours()).padStart(2,'0');
+  const mm = String(d.getUTCMinutes()).padStart(2,'0');
+  if(opts === 'short') return `${hh}:${mm}`;
+  return `${days[d.getUTCDay()]} ${hh}:${mm}`;
+}
+
+async function geocode(query){
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=6&language=en&format=json`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('geocode failed');
+  const data = await res.json();
+  return data.results || [];
+}
+
+document.getElementById('searchBtn').addEventListener('click', runSearch);
+document.getElementById('searchInput').addEventListener('keydown', e=>{ if(e.key==='Enter') runSearch(); });
+
+async function runSearch(){
+  const q = document.getElementById('searchInput').value.trim();
+  if(!q) return;
+  const box = document.getElementById('searchResults');
+  box.style.display = 'block';
+  box.innerHTML = `<div class="result"><span class="rname">Searching…</span></div>`;
+  try{
+    const results = await geocode(q);
+    if(!results.length){
+      box.innerHTML = `<div class="result"><span class="rname">No matches</span><div class="rmeta">Try a different place name.</div></div>`;
+      return;
+    }
+    box.innerHTML = results.map((r,i)=>`
+      <div class="result" data-i="${i}">
+        <div class="rname">${escapeHtml(r.name)}</div>
+        <div class="rmeta">${escapeHtml([r.admin1, r.country].filter(Boolean).join(', '))} · ${r.latitude.toFixed(2)}, ${r.longitude.toFixed(2)}</div>
+      </div>`).join('');
+    box.querySelectorAll('.result').forEach((el,i)=>{
+      el.addEventListener('click', ()=>{
+        const r = results[i];
+        selectLocation({
+          name: r.name,
+          admin: [r.admin1, r.country].filter(Boolean).join(', '),
+          lat: r.latitude, lon: r.longitude
+        });
+        box.style.display = 'none';
+      });
+    });
+  }catch(e){
+    box.innerHTML = `<div class="result"><span class="rname">Search failed</span><div class="rmeta">Check your connection.</div></div>`;
+  }
+}
+
+document.getElementById('geoBtn').addEventListener('click', ()=>{
+  if(!navigator.geolocation){
+    showToast('Location isn\'t available — try searching or entering coordinates.');
+    return;
+  }
+  showToast('Finding your position…', 3000);
+  navigator.geolocation.getCurrentPosition(pos=>{
+    selectLocation({
+      name: 'My position',
+      admin: '',
+      lat: pos.coords.latitude, lon: pos.coords.longitude
+    });
+  }, err=>{
+    showToast('Couldn\'t get your position — try searching or entering coordinates.');
+  }, { enableHighAccuracy:true, timeout:10000 });
+});
+
+const coordRow = document.getElementById('coordRow');
+document.getElementById('coordToggleBtn').addEventListener('click', ()=>{
+  const showing = coordRow.style.display !== 'none';
+  coordRow.style.display = showing ? 'none' : 'flex';
+  if(!showing) document.getElementById('coordLat').focus();
+});
+
+function parseCoord(str){
+  const v = parseFloat(String(str).trim());
+  return Number.isFinite(v) ? v : null;
+}
+
+function goToCoords(){
+  const lat = parseCoord(document.getElementById('coordLat').value);
+  const lon = parseCoord(document.getElementById('coordLon').value);
+  if(lat===null || lon===null){ showToast('Enter both latitude and longitude.'); return; }
+  if(lat < -90 || lat > 90 || lon < -180 || lon > 180){ showToast('Invalid coordinates — lat: -90 to 90, lon: -180 to 180.'); return; }
+  selectLocation({
+    name: `${lat.toFixed(3)}, ${lon.toFixed(3)}`,
+    admin: 'Custom coordinates',
+    lat, lon
+  });
+  coordRow.style.display = 'none';
+}
+
+document.getElementById('coordGoBtn').addEventListener('click', goToCoords);
+['coordLat','coordLon'].forEach(id=>{
+  document.getElementById(id).addEventListener('keydown', e=>{ if(e.key==='Enter') goToCoords(); });
+});
+
+function selectLocation(loc){
+  state.location = loc;
+  saveState();
+  setStationTag();
+  fetchAll();
+}
+
+function setStationTag(){
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('dataView').style.display = 'block';
+  document.getElementById('stationTag').style.display = 'flex';
+  document.getElementById('stationName').textContent = state.location.name + (state.location.admin ? ', ' + state.location.admin : '');
+  document.getElementById('stationCoords').textContent = `${state.location.lat.toFixed(3)}, ${state.location.lon.toFixed(3)}`;
+}
+
+document.getElementById('refreshBtn').addEventListener('click', fetchAll);
+
+async function fetchAll(){
+  if(!state.location) return;
+  const { lat, lon } = state.location;
+  try{
+    const wUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=windspeed_10m,winddirection_10m,windgusts_10m&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,cloud_cover&daily=sunrise,sunset&windspeed_unit=${apiWindUnit()}&timezone=auto&forecast_days=3`;
+    const mUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_direction,wave_period,sea_level_height_msl&timezone=auto&forecast_days=3`;
+    const [wRes, mRes] = await Promise.all([fetch(wUrl), fetch(mUrl)]);
+    weatherData = wRes.ok ? await wRes.json() : null;
+    marineData = mRes.ok ? await mRes.json() : null;
+    if(weatherData && weatherData.utc_offset_seconds !== undefined) utcOffsetSeconds = weatherData.utc_offset_seconds;
+    else if(marineData && marineData.utc_offset_seconds !== undefined) utcOffsetSeconds = marineData.utc_offset_seconds;
+    renderWind();
+    renderTide();
+    renderCurrentWeather();
+    renderSun();
+    renderWindTrend();
+    renderWaveTrend();
+    checkAlarms();
+  }catch(e){
+    showToast('Couldn\'t fetch conditions — check your connection.');
+  }
+}
+
+function apiWindUnit(){ return { kn:'kn', mph:'mph', kmh:'kmh', ms:'ms' }[state.windUnit] || 'kn'; }
+
+function nearestHourIndex(times){
+  const now = nowWallClockMs();
+  let bestI = 0, bestDiff = Infinity;
+  times.forEach((t,i)=>{
+    const diff = Math.abs(wallClockToMs(t) - now);
+    if(diff < bestDiff){ bestDiff = diff; bestI = i; }
+  });
+  return bestI;
+}
+
+function renderWind(){
+  document.getElementById('windUnitLbl').textContent = unitLabel(state.windUnit);
+  if(!weatherData || !weatherData.hourly){
+    document.getElementById('windSpeed').textContent = '--';
+    return;
+  }
+  const h = weatherData.hourly;
+  const i = nearestHourIndex(h.time);
+  const speed = h.windspeed_10m[i];
+  const gust = h.windgusts_10m ? h.windgusts_10m[i] : null;
+  const dir = h.winddirection_10m[i];
+  document.getElementById('windSpeed').textContent = Math.round(speed);
+  document.getElementById('windGust').textContent = gust!=null ? Math.round(gust)+' '+unitLabel(state.windUnit) : '--';
+  document.getElementById('windDirLbl').textContent = compassPoint(dir) + ' (' + Math.round(dir) + '°)';
+  document.getElementById('needle').setAttribute('transform', `rotate(${dir} 50 50)`);
+}
+
+function unitLabel(u){ return { kn:'kn', mph:'mph', kmh:'km/h', ms:'m/s' }[u] || u; }
+
+function compassPoint(deg){
+  const pts = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return pts[Math.round(deg/22.5) % 16];
+}
+
+const WX_CODES = {
+  0:{icon:'☀️',label:'Clear'}, 1:{icon:'🌤️',label:'Mostly clear'},
+  2:{icon:'⛅',label:'Partly cloudy'}, 3:{icon:'☁️',label:'Overcast'},
+  45:{icon:'🌫️',label:'Fog'}, 48:{icon:'🌫️',label:'Rime fog'},
+  51:{icon:'🌦️',label:'Light drizzle'}, 53:{icon:'🌦️',label:'Drizzle'}, 55:{icon:'🌧️',label:'Heavy drizzle'},
+  61:{icon:'🌧️',label:'Light rain'}, 63:{icon:'🌧️',label:'Rain'}, 65:{icon:'🌧️',label:'Heavy rain'},
+  71:{icon:'🌨️',label:'Light snow'}, 73:{icon:'🌨️',label:'Snow'}, 75:{icon:'❄️',label:'Heavy snow'},
+  80:{icon:'🌦️',label:'Showers'}, 81:{icon:'🌧️',label:'Showers'}, 82:{icon:'⛈️',label:'Violent showers'},
+  95:{icon:'⛈️',label:'Thunderstorm'}, 96:{icon:'⛈️',label:'Thunderstorm'}, 99:{icon:'⛈️',label:'Severe thunderstorm'}
+};
+
+function weatherCodeInfo(code){ return WX_CODES[code] || {icon:'—', label:'—'}; }
+
+function renderCurrentWeather(){
+  if(!weatherData || !weatherData.current){
+    document.getElementById('wxTemp').textContent = '--';
+    document.getElementById('wxIcon').textContent = '—';
+    return;
+  }
+  const c = weatherData.current;
+  const info = weatherCodeInfo(c.weather_code);
+  document.getElementById('wxIcon').textContent = info.icon;
+  document.getElementById('wxTemp').textContent = Math.round(c.temperature_2m);
+  document.getElementById('wxDesc').textContent = info.label;
+  document.getElementById('wxFeels').textContent = Math.round(c.apparent_temperature);
+  document.getElementById('wxHumidity').textContent = Math.round(c.relative_humidity_2m);
+}
+
+function renderSun(){
+  if(!weatherData || !weatherData.daily || !weatherData.daily.sunrise || !weatherData.daily.sunrise[0]){
+    document.getElementById('sunriseTime').textContent = '--:--';
+    document.getElementById('sunsetTime').textContent = '--:--';
+    return;
+  }
+  const d = weatherData.daily;
+  const sunriseMs = wallClockToMs(d.sunrise[0]);
+  const sunsetMs = wallClockToMs(d.sunset[0]);
+  document.getElementById('sunriseTime').textContent = formatWallClock(sunriseMs,'short');
+  document.getElementById('sunsetTime').textContent = formatWallClock(sunsetMs,'short');
+  const mins = Math.round((sunsetMs - sunriseMs)/60000);
+  const h = Math.floor(mins/60), m = mins%60;
+  document.getElementById('sunDaylen').textContent = `daylight ${h}h ${m}m`;
+}
+
+function renderTide(){
+  document.getElementById('tideUnitLbl').textContent = state.tideUnit === 'ft' ? 'ft' : 'm';
+  if(!marineData || !marineData.hourly || !marineData.hourly.sea_level_height_msl){
+    document.getElementById('tideNow').textContent = '--';
+    document.getElementById('waveInfo').textContent = 'Tide data unavailable — try a point further out.';
+    tideExtrema = [];
+    drawPlotter([]);
+    renderTideChips();
+    updateCountdown();
+    return;
+  }
+  const h = marineData.hourly;
+  const heights = h.sea_level_height_msl.map(v => v==null ? null : convertTide(v));
+  const times = h.time;
+  const i = nearestHourIndex(times);
+  document.getElementById('tideNow').textContent = heights[i]!=null ? heights[i].toFixed(2) : '--';
+  const next = heights[i+1];
+  const trendEl = document.getElementById('tideTrend');
+  if(next!=null && heights[i]!=null){
+    if(next > heights[i]){ trendEl.textContent='▲ Rising'; trendEl.className='trend rising'; }
+    else { trendEl.textContent='▼ Falling'; trendEl.className='trend falling'; }
+  }else{
+    trendEl.textContent = '—'; trendEl.className='trend';
+  }
+  const wave = h.wave_height ? h.wave_height[i] : null;
+  const period = h.wave_period ? h.wave_period[i] : null;
+  document.getElementById('waveInfo').textContent = wave!=null ? `wave ${wave.toFixed(1)} m${period!=null ? ' · ' +Math.round(period)+'s' : ''}` : 'wave data unavailable';
+  tideExtrema = [];
+  for(let k=1; k<heights.length-1; k++){
+    if(heights[k]==null || heights[k-1]==null || heights[k+1]==null) continue;
+    if(heights[k] >= heights[k-1] && heights[k] >= heights[k+1]){
+      tideExtrema.push({ ms: wallClockToMs(times[k]), height: heights[k], kind:'high' });
+    } else if(heights[k] <= heights[k-1] && heights[k] <= heights[k+1]){
+      tideExtrema.push({ ms: wallClockToMs(times[k]), height: heights[k], kind:'low' });
+    }
+  }
+  drawPlotter(heights.map((v,idx)=>({ ms: wallClockToMs(times[idx]), v })));
+  renderTideChips();
+  updateCountdown();
+}
+
+let countdownTimer = null;
+function startCountdownTicker(){
+  if(countdownTimer) return;
+  countdownTimer = setInterval(updateCountdown, 1000);
+}
+
+function updateCountdown(){
+  const now = nowWallClockMs();
+  const upcoming = tideExtrema.filter(e => e.ms > now).sort((a,b)=>a.ms-b.ms);
+  let bigText, kindText, subText;
+  if(!upcoming.length){
+    bigText = '--:--:--';
+    subText = 'No upcoming tide data';
+    kindText = 'tide';
+  }else{
+    const next = upcoming[0];
+    const diffSec = Math.max(0, Math.floor((next.ms - now)/1000));
+    const hh = Math.floor(diffSec/3600);
+    const mm = Math.floor((diffSec%3600)/60);
+    const ss = diffSec%60;
+    bigText = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+    kindText = next.kind === 'high' ? 'HIGH TIDE' : 'LOW TIDE';
+    subText = `${formatWallClock(next.ms)} · ${next.height.toFixed(2)} ${state.tideUnit==='ft'?'ft':'m'}`;
+  }
+  document.getElementById('countdownBig').textContent = bigText;
+  document.getElementById('countdownSub').textContent = subText;
+  document.getElementById('countdownKind').textContent = kindText;
+}
+
+function convertTide(m){ return state.tideUnit === 'ft' ? m * 3.28084 : m; }
+
+function renderTideChips(){
+  const now = nowWallClockMs();
+  const upcoming = tideExtrema.filter(e => e.ms >= now - 5*60000).slice(0,6);
+  const list = document.getElementById('tideList');
+  if(!upcoming.length){ list.innerHTML = `<div class="tide-chip"><div class="kind">—</div></div>`; return; }
+  list.innerHTML = upcoming.map(e=>`
+    <div class="tide-chip">
+      <div class="kind">${e.kind}</div>
+      <div class="time mono">${formatWallClock(e.ms,'short')}</div>
+      <div class="ht">${e.height.toFixed(2)} ${state.tideUnit === 'ft' ? 'ft' : 'm'}</div>
+    </div>`).join('');
+}
+
+function drawPlotter(points){
+  const canvas = document.getElementById('plotter');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const displayW = canvas.clientWidth || 720, displayH = 150;
+  const targetW = Math.round(displayW * dpr), targetH = Math.round(displayH * dpr);
+  if(canvas.width !== targetW || canvas.height !== targetH){ canvas.width = targetW; canvas.height = targetH; }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const w = displayW, h = displayH;
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle = 'rgba(159,184,200,0.3)';
+  ctx.lineWidth = 1;
+  for(let x = 0; x <= w; x += w/5) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+  if(points.length < 2) return;
+  const valid = points.filter(p=>p.v!=null);
+  if(!valid.length) return;
+  const minV = Math.min(...valid.map(p=>p.v));
+  const maxV = Math.max(...valid.map(p=>p.v));
+  const t0 = points[0].ms, t1 = points[points.length-1].ms;
+  ctx.strokeStyle = '#3FA79A';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  let started = false;
+  points.forEach(p=>{
+    if(p.v==null){ started=false; return; }
+    const x = (p.ms-t0)/(t1-t0)*w, y = h - ((p.v-minV)/(maxV-minV))*h;
+    if(!started){ ctx.moveTo(x,y); started=true; } else { ctx.lineTo(x,y); }
+  });
+  ctx.stroke();
+}
+
+function renderWindTrend(){
+  const canvas = document.getElementById('windPlotter');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const displayW = canvas.clientWidth || 720, displayH = 150;
+  const targetW = Math.round(displayW * dpr), targetH = Math.round(displayH * dpr);
+  if(canvas.width !== targetW || canvas.height !== targetH){ canvas.width = targetW; canvas.height = targetH; }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const w = displayW, h = displayH;
+  ctx.clearRect(0,0,w,h);
+  if(!weatherData || !weatherData.hourly) return;
+  const hData = weatherData.hourly.windspeed_10m.slice(0,48);
+  if(hData.length < 2) return;
+  const minV = Math.min(...hData), maxV = Math.max(...hData);
+  ctx.strokeStyle = '#E3A94F';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  hData.forEach((v,i)=>{
+    const x = (i/(hData.length-1))*w, y = h - ((v-minV)/(maxV-minV))*h;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+}
+
+function renderWaveTrend(){
+  const canvas = document.getElementById('wavePlotter');
+  if(!canvas || !marineData || !marineData.hourly || !marineData.hourly.wave_height) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const displayW = canvas.clientWidth || 720, displayH = 150;
+  const targetW = Math.round(displayW * dpr), targetH = Math.round(displayH * dpr);
+  if(canvas.width !== targetW || canvas.height !== targetH){ canvas.width = targetW; canvas.height = targetH; }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const w = displayW, h = displayH;
+  ctx.clearRect(0,0,w,h);
+  const hData = marineData.hourly.wave_height.slice(0,48);
+  if(hData.length < 2) return;
+  const minV = Math.min(...hData), maxV = Math.max(...hData);
+  ctx.strokeStyle = '#9FB8C8';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  hData.forEach((v,i)=>{
+    const x = (i/(hData.length-1))*w, y = h - ((v-minV)/(maxV-minV))*h;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+}
+
+document.getElementById('windUnitSel').addEventListener('change', e=>{
+  state.windUnit = e.target.value;
+  saveState();
+  fetchAll();
+});
+document.getElementById('tideUnitSel').addEventListener('change', e=>{
+  state.tideUnit = e.target.value;
+  saveState();
+  renderTide();
+});
+
+function syncAlarmConfigVisibility(){
+  document.getElementById('windAlarmConfig').classList.toggle('open', state.alarms.wind.enabled);
+  document.getElementById('tideAlarmConfig').classList.toggle('open', state.alarms.tide.enabled);
+  updateAlarmCount();
+}
+
+function updateAlarmCount(){
+  const n = (state.alarms.wind.enabled?1:0) + (state.alarms.tide.enabled?1:0);
+  document.getElementById('alarmCount').textContent = `${n} active`;
+}
+
+function requestNotifyPermission(){
+  if('Notification' in window && Notification.permission === 'default'){
+    Notification.requestPermission();
+  }
+}
+
+document.getElementById('windAlarmToggle').addEventListener('change', e=>{
+  state.alarms.wind.enabled = e.target.checked;
+  if(e.target.checked) requestNotifyPermission();
+  syncAlarmConfigVisibility();
+  saveState();
+});
+document.getElementById('windThreshold').addEventListener('change', e=>{
+  state.alarms.wind.threshold = parseFloat(e.target.value)||0;
+  saveState();
+});
+document.getElementById('windGustToo').addEventListener('change', e=>{
+  state.alarms.wind.gustToo = e.target.checked;
+  saveState();
+});
+document.getElementById('tideAlarmToggle').addEventListener('change', e=>{
+  state.alarms.tide.enabled = e.target.checked;
+  if(e.target.checked) requestNotifyPermission();
+  syncAlarmConfigVisibility();
+  saveState();
+});
+document.getElementById('tideWhich').addEventListener('change', e=>{
+  state.alarms.tide.which = e.target.value;
+  saveState();
+});
+document.getElementById('tideOffset').addEventListener('change', e=>{
+  state.alarms.tide.offsetMin = parseFloat(e.target.value)||0;
+  saveState();
+});
+
+function checkAlarms(){
+  const now = nowWallClockMs();
+  if(state.alarms.wind.enabled && weatherData && weatherData.hourly){
+    const h = weatherData.hourly;
+    const i = nearestHourIndex(h.time);
+    const speed = h.windspeed_10m[i];
+    const gust = h.windgusts_10m ? h.windgusts_10m[i] : null;
+    const thresh = state.alarms.wind.threshold;
+    if(speed >= thresh || (state.alarms.wind.gustToo && gust!=null && gust >= thresh)){
+      const key = `wind-${Math.floor(now/(30*60000))}`;
+      if(!state.triggered[key]){
+        state.triggered[key] = true;
+        const which = speed >= thresh ? 'Wind' : 'Gusts';
+        soundKlaxon(`${which} at ${state.location.name}: ${Math.round(speed >= thresh ? speed : gust)} ${unitLabel(state.windUnit)} (limit: ${thresh})`);
+      }
+    }
+  }
+  if(state.alarms.tide.enabled && tideExtrema.length){
+    const offsetMs = state.alarms.tide.offsetMin*60000;
+    tideExtrema.forEach(e=>{
+      if(state.alarms.tide.which !== 'both' && e.kind !== state.alarms.tide.which) return;
+      const key = `tide-${e.ms}-${e.kind}`;
+      if(state.triggered[key]) return;
+      if(e.ms - offsetMs <= now && now <= e.ms + 5*60000){
+        state.triggered[key] = true;
+        const mins = Math.round((e.ms-now)/60000);
+        const when = mins > 0 ? `in ${mins}min` : 'now';
+        soundKlaxon(`${e.kind === 'high' ? 'High' : 'Low'} tide at ${state.location.name} ${when}: ${e.height.toFixed(2)} ${state.tideUnit==='ft'?'ft':'m'}`);
+      }
+    });
+  }
+  const cutoff = now - 24*60*60000;
+  Object.keys(state.triggered).forEach(k=>{
+    const m = k.match(/^tide-(\d+)-/);
+    if(m && parseInt(m[1],10) < cutoff) delete state.triggered[k];
+  });
+  saveState();
+}
+
+setInterval(()=>{ if(state.location) drawPlotter(marineData && marineData.hourly && marineData.hourly.sea_level_height_msl ? marineData.hourly.sea_level_height_msl.map((v,idx)=>({ ms: wallClockToMs(marineData.hourly.time[idx]), v: v==null?null:convertTide(v) })) : []); renderWindTrend(); renderWaveTrend(); checkAlarms(); }, 30000);
+setInterval(()=>{ if(state.location) fetchAll(); }, 10*60000);
+
+loadState();
+startCountdownTicker();
+
+/* =========================================================
+   INSTALL (PWA)
+========================================================= */
+let deferredPrompt = null;
+const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+function refreshInstallUI(){
+  const installed = isStandalone();
+  document.getElementById('installChip').hidden = installed || !deferredPrompt;
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  refreshInstallUI();
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  refreshInstallUI();
+  showToast('Wind & Tide Watch installed — find it on your home screen.');
+});
+
+document.getElementById('installChip').onclick = async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice.catch(() => null);
+  deferredPrompt = null;
+  refreshInstallUI();
+};
+
+/* =========================================================
+   AUTO-UPDATE (Service Worker)
+========================================================= */
+const APP_VERSION = '__BUILD__';
+let swReg = null, pendingReload = false;
+
+function doReload(){ try{ sessionStorage.setItem('wind_tide_updated', '1'); }catch(e){} location.reload(); }
+
+function applyUpdate(){
+  const a = document.activeElement;
+  const busy = document.querySelector('dialog') || (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));
+  if(!busy){ doReload(); return; }
+  pendingReload = true;
+  showToast('Update ready — will apply when you finish.', 6000);
+}
+
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'hidden' && pendingReload) doReload();
+  if(document.visibilityState === 'visible' && swReg) swReg.update().catch(() => {});
+});
+
+if('serviceWorker' in navigator && location.protocol !== 'file:'){
+  let hasController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if(!hasController){ hasController = true; return; }
+    applyUpdate();
+  });
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      swReg = reg;
+      setInterval(() => reg.update().catch(() => {}), 30*60000);
+    }).catch(() => {});
+  });
+}
+
+try{
+  if(sessionStorage.getItem('wind_tide_updated')){
+    sessionStorage.removeItem('wind_tide_updated');
+    setTimeout(() => showToast('Wind & Tide Watch updated to the latest version'), 400);
+  }
+}catch(e){}
+
+refreshInstallUI();
+</script>
+</body>
+</html>
