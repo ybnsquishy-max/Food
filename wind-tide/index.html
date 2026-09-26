@@ -1038,15 +1038,15 @@ function drawPlotter(points){
   ctx.stroke();
   ctx.fillStyle = 'rgba(10,34,51,0.7)';
   ctx.fillRect(0, h-18, 50, 16);
-  ctx.fillRect(w-50, 0, 50, 18);
+  ctx.fillRect(w-55, 0, 55, 18);
   ctx.fillStyle = 'rgba(159,184,200,0.9)';
   ctx.font = 'bold 12px IBM Plex Mono';
   ctx.textAlign = 'left';
   ctx.fillText('0h', 4, h-4);
   ctx.textAlign = 'right';
-  ctx.fillText('24h', w-4, h-4);
-  ctx.fillText(maxV.toFixed(1), w-4, 13);
-  ctx.fillText(minV.toFixed(1), w-4, h-2);
+  ctx.fillText('24h', w-6, h-4);
+  ctx.fillText(maxV.toFixed(1), w-6, 13);
+  ctx.fillText(minV.toFixed(1), w-6, h-2);
 }
 
 function renderWindTrend(){
@@ -1078,15 +1078,15 @@ function renderWindTrend(){
   ctx.stroke();
   ctx.fillStyle = 'rgba(10,34,51,0.7)';
   ctx.fillRect(0, h-18, 50, 16);
-  ctx.fillRect(w-65, 0, 65, 18);
+  ctx.fillRect(w-70, 0, 70, 18);
   ctx.fillStyle = 'rgba(227,169,79,0.95)';
   ctx.font = 'bold 12px IBM Plex Mono';
   ctx.textAlign = 'left';
   ctx.fillText('now', 4, h-4);
   ctx.textAlign = 'right';
-  ctx.fillText('48h', w-4, h-4);
-  ctx.fillText(maxV.toFixed(1)+'kn', w-4, 13);
-  ctx.fillText(minV.toFixed(1)+'kn', w-4, h-2);
+  ctx.fillText('48h', w-6, h-4);
+  ctx.fillText(maxV.toFixed(1)+'kn', w-6, 13);
+  ctx.fillText(minV.toFixed(1)+'kn', w-6, h-2);
 }
 
 function renderWaveTrend(){
@@ -1117,15 +1117,15 @@ function renderWaveTrend(){
   ctx.stroke();
   ctx.fillStyle = 'rgba(10,34,51,0.7)';
   ctx.fillRect(0, h-18, 50, 16);
-  ctx.fillRect(w-50, 0, 50, 18);
+  ctx.fillRect(w-55, 0, 55, 18);
   ctx.fillStyle = 'rgba(159,184,200,0.95)';
   ctx.font = 'bold 12px IBM Plex Mono';
   ctx.textAlign = 'left';
   ctx.fillText('now', 4, h-4);
   ctx.textAlign = 'right';
-  ctx.fillText('48h', w-4, h-4);
-  ctx.fillText(maxV.toFixed(1)+'m', w-4, 13);
-  ctx.fillText(minV.toFixed(1)+'m', w-4, h-2);
+  ctx.fillText('48h', w-6, h-4);
+  ctx.fillText(maxV.toFixed(1)+'m', w-6, 13);
+  ctx.fillText(minV.toFixed(1)+'m', w-6, h-2);
 }
 
 document.getElementById('windUnitSel').addEventListener('change', e=>{
