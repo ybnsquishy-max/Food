@@ -1016,6 +1016,7 @@ function drawPlotter(points){
   ctx.strokeStyle = 'rgba(159,184,200,0.3)';
   ctx.lineWidth = 1;
   for(let x = 0; x <= w; x += w/5) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+  for(let y = 0; y <= h; y += h/3) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
   if(points.length < 2) return;
   const valid = points.filter(p=>p.v!=null);
   if(!valid.length) return;
@@ -1032,6 +1033,14 @@ function drawPlotter(points){
     if(!started){ ctx.moveTo(x,y); started=true; } else { ctx.lineTo(x,y); }
   });
   ctx.stroke();
+  ctx.fillStyle = 'rgba(159,184,200,0.5)';
+  ctx.font = '11px IBM Plex Mono';
+  ctx.fillText('0h', 4, h-2);
+  ctx.fillText('24h', w-28, h-2);
+  ctx.textAlign = 'right';
+  ctx.fillText(minV.toFixed(1), w-4, h-2);
+  ctx.fillText(maxV.toFixed(1), w-4, 12);
+  ctx.textAlign = 'left';
 }
 
 function renderWindTrend(){
@@ -1045,6 +1054,10 @@ function renderWindTrend(){
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const w = displayW, h = displayH;
   ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle = 'rgba(159,184,200,0.3)';
+  ctx.lineWidth = 1;
+  for(let x = 0; x <= w; x += w/5) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+  for(let y = 0; y <= h; y += h/3) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
   if(!weatherData || !weatherData.hourly) return;
   const hData = weatherData.hourly.windspeed_10m.slice(0,48);
   if(hData.length < 2) return;
@@ -1057,6 +1070,14 @@ function renderWindTrend(){
     if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
   });
   ctx.stroke();
+  ctx.fillStyle = 'rgba(159,184,200,0.5)';
+  ctx.font = '11px IBM Plex Mono';
+  ctx.fillText('now', 4, h-2);
+  ctx.fillText('48h', w-28, h-2);
+  ctx.textAlign = 'right';
+  ctx.fillText(minV.toFixed(1)+'kn', w-4, h-2);
+  ctx.fillText(maxV.toFixed(1)+'kn', w-4, 12);
+  ctx.textAlign = 'left';
 }
 
 function renderWaveTrend(){
@@ -1070,6 +1091,10 @@ function renderWaveTrend(){
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const w = displayW, h = displayH;
   ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle = 'rgba(159,184,200,0.3)';
+  ctx.lineWidth = 1;
+  for(let x = 0; x <= w; x += w/5) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+  for(let y = 0; y <= h; y += h/3) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
   const hData = marineData.hourly.wave_height.slice(0,48);
   if(hData.length < 2) return;
   const minV = Math.min(...hData), maxV = Math.max(...hData);
@@ -1081,6 +1106,14 @@ function renderWaveTrend(){
     if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
   });
   ctx.stroke();
+  ctx.fillStyle = 'rgba(159,184,200,0.5)';
+  ctx.font = '11px IBM Plex Mono';
+  ctx.fillText('now', 4, h-2);
+  ctx.fillText('48h', w-28, h-2);
+  ctx.textAlign = 'right';
+  ctx.fillText(minV.toFixed(1)+'m', w-4, h-2);
+  ctx.fillText(maxV.toFixed(1)+'m', w-4, 12);
+  ctx.textAlign = 'left';
 }
 
 document.getElementById('windUnitSel').addEventListener('change', e=>{
