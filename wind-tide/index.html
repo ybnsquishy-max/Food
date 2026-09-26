@@ -834,9 +834,14 @@ async function fetchAll(){
   try{
     const wUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=windspeed_10m,winddirection_10m,windgusts_10m&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,cloud_cover&daily=sunrise,sunset&windspeed_unit=${apiWindUnit()}&timezone=auto&forecast_days=3`;
     const mUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_direction,wave_period,sea_level_height_msl&timezone=auto&forecast_days=3`;
-    const [wRes, mRes] = await Promise.all([fetch(wUrl), fetch(mUrl)]);
+    const [wRes, mRes] = await Promise.all([
+      fetch(wUrl, { cache: 'no-cache', signal: AbortSignal.timeout(10000) }),
+      fetch(mUrl, { cache: 'no-cache', signal: AbortSignal.timeout(10000) })
+    ]);
+    if(!wRes.ok && !mRes.ok) throw new Error('Data fetch failed');
     weatherData = wRes.ok ? await wRes.json() : null;
     marineData = mRes.ok ? await mRes.json() : null;
+    if((weatherData && !weatherData.hourly) || (marineData && !marineData.hourly)) throw new Error('Invalid data format');
     if(weatherData && weatherData.utc_offset_seconds !== undefined) utcOffsetSeconds = weatherData.utc_offset_seconds;
     else if(marineData && marineData.utc_offset_seconds !== undefined) utcOffsetSeconds = marineData.utc_offset_seconds;
     renderWind();
@@ -847,7 +852,9 @@ async function fetchAll(){
     renderWaveTrend();
     checkAlarms();
   }catch(e){
-    showToast('Couldn\'t fetch conditions — check your connection.');
+    console.error('Fetch error:', e.message);
+    showToast('Couldn\'t fetch current conditions — retrying in 1 minute.');
+    setTimeout(fetchAll, 60000);
   }
 }
 
@@ -1232,7 +1239,7 @@ function checkAlarms(){
 }
 
 setInterval(()=>{ if(state.location) drawPlotter(marineData && marineData.hourly && marineData.hourly.sea_level_height_msl ? marineData.hourly.sea_level_height_msl.map((v,idx)=>({ ms: wallClockToMs(marineData.hourly.time[idx]), v: v==null?null:convertTide(v) })) : []); renderWindTrend(); renderWaveTrend(); checkAlarms(); }, 30000);
-setInterval(()=>{ if(state.location) fetchAll(); }, 10*60000);
+setInterval(()=>{ if(state.location) fetchAll(); }, 5*60000);
 
 loadState();
 startCountdownTicker();
