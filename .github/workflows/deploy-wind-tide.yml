@@ -3,7 +3,7 @@ name: Deploy Wind & Tide Watch
 on:
   push:
     branches: [main]
-    paths: ['wind-tide/**']
+    paths: ['wind-tide/**', '.github/workflows/deploy-wind-tide.yml']
   workflow_dispatch:
 
 permissions:
@@ -19,7 +19,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
-      name: github-pages
+      name: github-pages-wind-tide
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
