@@ -14,6 +14,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%230A2233'/><ellipse cx='256' cy='280' rx='200' ry='150' fill='%233FA79A'/><path d='M 100 250 Q 150 200 200 220 Q 250 240 300 200 Q 350 160 400 200 Q 450 240 500 220 L 512 320 Q 400 380 256 370 Q 112 360 0 320 Z' fill='%2363D4C8'/><circle cx='150' cy='240' r='12' fill='%23E3A94F'/></svg>">
 <link rel="apple-touch-icon" href="icons/icon-192.png?v=wave2">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -215,6 +216,38 @@
     color:var(--fog-dim);
     margin-bottom:12px;
   }
+
+  /* ---------- wind map ---------- */
+  .wm-panel{margin-top:14px;}
+  .wm-head{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:10px;}
+  .wm-head .panel-label{margin-bottom:0;}
+  .wm-when{font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--brass-bright);}
+  #windMap{height:340px; border-radius:10px; overflow:hidden; border:1px solid rgba(159,184,200,0.2); background:#0F3049;}
+  @media(max-width:480px){ #windMap{height:300px;} }
+  .wm-msg{display:flex; align-items:center; justify-content:center; height:100%; padding:16px; text-align:center; color:var(--fog); font-size:14px;}
+  .wm-slider{display:flex; align-items:center; gap:10px; margin-top:12px;}
+  .wm-slider input{flex:1; accent-color:var(--brass-bright);}
+  .wm-slider button{background:var(--navy-panel-2); color:var(--white-ish); border:1px solid rgba(159,184,200,0.25); border-radius:8px; padding:6px 10px; font:600 12px 'Inter',sans-serif; cursor:pointer;}
+  .wm-legend{display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px; font-size:12px; color:var(--fog);}
+  .wm-legend i{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px;}
+  .wm-icon svg{position:absolute; left:0; top:0; width:44px; height:44px; filter:drop-shadow(0 1px 1px rgba(10,34,51,.6));}
+  .wm-icon b{position:absolute; left:50%; bottom:-6px; transform:translateX(-50%); font:700 10px/1 'IBM Plex Mono',monospace; color:#0A2233; background:rgba(255,255,255,.85); border-radius:4px; padding:1px 3px;}
+  .wm-icon.home svg{width:52px; height:52px; left:-4px; top:-4px;}
+  .wm-icon.home::before{content:''; position:absolute; left:4px; top:4px; width:36px; height:36px; border-radius:50%; border:2px solid #0A2233; background:rgba(227,169,79,.25);}
+  .shelter{margin-top:16px; padding-top:14px; border-top:1px solid rgba(159,184,200,0.15);}
+  .shelter h3{margin:0 0 4px; font-size:15px; font-weight:700;}
+  .shelter .now-line{font-size:13px; color:var(--fog); margin-bottom:12px;}
+  .facing-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
+  .facing{border-radius:8px; padding:8px 6px; text-align:center; border:1px solid transparent;}
+  .facing .fd{font:700 15px 'IBM Plex Mono',monospace;}
+  .facing .fs{font-size:11px; margin-top:2px;}
+  .facing.off{background:rgba(63,167,154,.18); border-color:rgba(63,167,154,.55); color:#8FE0D5;}
+  .facing.cross{background:rgba(227,169,79,.12); border-color:rgba(227,169,79,.4); color:#F0C98A;}
+  .facing.on{background:rgba(193,68,60,.16); border-color:rgba(232,92,80,.5); color:#F4A39A;}
+  .shelter .advice{font-size:14px; line-height:1.5; margin:12px 0 0;}
+  .shelter .advice b{color:var(--white-ish);}
+  .shelter .fineprint{font-size:12px; color:var(--fog-dim); margin-top:8px; line-height:1.5;}
+  .leaflet-container{font-family:'Inter',sans-serif;}
 
   .compass-wrap{display:flex; align-items:center; gap:16px;}
   .compass{width:112px; height:112px; position:relative; flex-shrink:0;}
@@ -553,6 +586,33 @@
       </div>
     </div>
 
+    <div class="panel wm-panel" id="windMapPanel">
+      <div class="wm-head">
+        <div class="panel-label">Wind map</div>
+        <div class="wm-when" id="wmWhen">Now</div>
+      </div>
+      <div id="windMap"><div class="wm-msg">Loading map…</div></div>
+      <div class="wm-slider">
+        <label for="wmTime" class="info-label" style="margin:0;white-space:nowrap;">Time</label>
+        <input type="range" id="wmTime" min="0" max="47" value="0" step="1">
+        <button type="button" id="wmNow">Now</button>
+      </div>
+      <div class="wm-legend">
+        <span>Arrows point the way the wind is blowing</span>
+        <span><i style="background:#3FA79A"></i>Light &lt;8 kn</span>
+        <span><i style="background:#E3A94F"></i>Moderate 8–15</span>
+        <span><i style="background:#E8833A"></i>Fresh 15–22</span>
+        <span><i style="background:#E85C50"></i>Strong 22+</span>
+      </div>
+      <div class="shelter" id="shelter">
+        <h3>Which beaches are sheltered?</h3>
+        <div class="now-line" id="shelterNow">—</div>
+        <div class="facing-grid" id="facingGrid"></div>
+        <p class="advice" id="shelterAdvice"></p>
+        <p class="fineprint">A beach is sheltered when the wind blows off the land (offshore). "Facing" is the direction you look when you stand on the sand looking out to sea.</p>
+      </div>
+    </div>
+
     <div class="panel">
       <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
         <div class="panel-label" style="margin-bottom:0;">48-hour tide · next event</div>
@@ -657,6 +717,7 @@
 <div id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/canvg/2.1.2/canvg.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <!-- Original Wind & Tide Watch script -->
 <script>
 /* =========================================================
@@ -933,12 +994,152 @@ async function fetchAll(){
     renderWindTrend();
     renderWaveTrend();
     checkAlarms();
+    refreshWindMap();
   }catch(e){
     console.error('Fetch error:', e.message);
     showToast('Couldn\'t fetch current conditions — retrying in 1 minute.');
     setTimeout(fetchAll, 60000);
   }
 }
+
+/* ---------- Wind map ---------- */
+const WM = { map:null, tiles:null, layer:null, key:null, data:null, bounds:null, fetchedAt:0, unit:null, offset:0, req:0, timer:null };
+const TO_KN = { kn:1, mph:0.868976, kmh:0.539957, ms:1.943844 };
+const FACINGS = [['N',0],['NE',45],['E',90],['SE',135],['S',180],['SW',225],['W',270],['NW',315]];
+
+function windColor(speed){
+  const kn = speed * (TO_KN[state.windUnit] || 1);
+  if(kn < 8) return '#3FA79A';
+  if(kn < 15) return '#E3A94F';
+  if(kn < 22) return '#E8833A';
+  return '#E85C50';
+}
+function angDist(a, b){ const d = Math.abs(((a - b) % 360 + 360) % 360); return d > 180 ? 360 - d : d; }
+
+function initWindMap(){
+  if(WM.map) return true;
+  const box = document.getElementById('windMap');
+  if(typeof L === 'undefined'){ box.innerHTML = '<div class="wm-msg">The map needs an internet connection. It will appear next time you are online.</div>'; return false; }
+  box.innerHTML = '';
+  WM.map = L.map(box, { zoomControl:true, scrollWheelZoom:false, attributionControl:true });
+  WM.tiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    maxZoom: 16, subdomains: 'abcd',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a> · wind: Open-Meteo'
+  }).addTo(WM.map);
+  WM.layer = L.layerGroup().addTo(WM.map);
+  WM.map.attributionControl.setPrefix(false);
+  WM.map.on('moveend', () => { clearTimeout(WM.timer); WM.timer = setTimeout(() => loadWindGrid(false), 500); });
+  new ResizeObserver(() => {
+    if(!box.clientWidth) return;
+    WM.map.invalidateSize();
+    clearTimeout(WM.timer); WM.timer = setTimeout(() => loadWindGrid(false), 300);
+  }).observe(box);
+  return true;
+}
+
+function refreshWindMap(){
+  if(!state.location || !initWindMap()) return;
+  const { lat, lon } = state.location;
+  const key = lat.toFixed(4) + ',' + lon.toFixed(4);
+  WM.map.invalidateSize();
+  if(WM.key !== key){ WM.key = key; WM.bounds = null; WM.offset = 0; document.getElementById('wmTime').value = 0; WM.map.setView([lat, lon], 11); }
+  loadWindGrid(true);
+}
+
+async function loadWindGrid(force){
+  if(!WM.map || !state.location) return;
+  const size = WM.map.getSize();
+  if(!size.x || !size.y) return;
+  const view = WM.map.getBounds();
+  const fresh = Date.now() - WM.fetchedAt < 10 * 60000 && WM.unit === state.windUnit;
+  if(!force && fresh && WM.bounds && WM.bounds.contains(view)){ drawWindMap(); return; }
+  const b = view.pad(0.15);
+  const cols = 6, rows = Math.max(4, Math.min(9, Math.round(cols * size.y / Math.max(size.x, 1))));
+  const pts = [[state.location.lat, state.location.lon]];
+  for(let r = 0; r < rows; r++){
+    for(let c = 0; c < cols; c++){
+      pts.push([
+        b.getSouth() + (r + 0.5) * (b.getNorth() - b.getSouth()) / rows,
+        b.getWest() + (c + 0.5) * (b.getEast() - b.getWest()) / cols
+      ]);
+    }
+  }
+  const id = ++WM.req;
+  const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + pts.map(p => p[0].toFixed(3)).join(',') +
+    '&longitude=' + pts.map(p => p[1].toFixed(3)).join(',') +
+    '&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&windspeed_unit=' + apiWindUnit() + '&timezone=auto&forecast_days=3';
+  try{
+    const res = await fetch(url, { cache:'no-cache', signal: AbortSignal.timeout(12000) });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    if(id !== WM.req) return;
+    const list = Array.isArray(json) ? json : [json];
+    WM.data = list.map((d, i) => ({ lat: pts[i][0], lon: pts[i][1], h: d.hourly }));
+    WM.bounds = b; WM.fetchedAt = Date.now(); WM.unit = state.windUnit;
+    drawWindMap();
+  }catch(e){
+    if(id === WM.req) showToast('Couldn\'t load the wind map. Check your connection.');
+  }
+}
+
+function arrowSvg(dir, color, home){
+  const rot = (dir + 180) % 360;
+  return `<svg viewBox="0 0 44 44" style="transform:rotate(${rot}deg)"><path d="M22 4 L31 18 L25 17 L25 38 L19 38 L19 17 L13 18 Z" fill="${color}" stroke="#0A2233" stroke-width="${home ? 2 : 1.5}" stroke-linejoin="round"/></svg>`;
+}
+
+function drawWindMap(){
+  if(!WM.data || !WM.data.length || !WM.data[0].h) return;
+  const times = WM.data[0].h.time;
+  const nowI = nearestHourIndex(times);
+  const i = Math.min(times.length - 1, nowI + WM.offset);
+  const slider = document.getElementById('wmTime');
+  slider.max = Math.max(0, Math.min(47, times.length - 1 - nowI));
+  const ms = wallClockToMs(times[i]);
+  const d = new Date(ms);
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const label = days[d.getUTCDay()] + ' ' + String(d.getUTCHours()).padStart(2,'0') + ':00';
+  document.getElementById('wmWhen').textContent = WM.offset === 0 ? 'Now · ' + label : '+' + WM.offset + 'h · ' + label;
+
+  WM.layer.clearLayers();
+  const u = unitLabel(state.windUnit);
+  WM.data.forEach((pt, k) => {
+    const sp = pt.h.wind_speed_10m[i], dir = pt.h.wind_direction_10m[i], gust = pt.h.wind_gusts_10m ? pt.h.wind_gusts_10m[i] : null;
+    if(sp == null || dir == null) return;
+    const home = k === 0;
+    const icon = L.divIcon({ className: 'wm-icon' + (home ? ' home' : ''), iconSize: [44, 44], iconAnchor: [22, 22],
+      html: arrowSvg(dir, windColor(sp), home) + `<b>${Math.round(sp)}</b>` });
+    const m = L.marker([pt.lat, pt.lon], { icon, keyboard:false, zIndexOffset: home ? 1000 : 0 });
+    m.bindPopup(`${home ? '<strong>' + escapeHtml(state.location.name) + '</strong><br>' : ''}${Math.round(sp)} ${u} from ${compassPoint(dir)} (${Math.round(dir)}°)${gust != null ? '<br>gusts ' + Math.round(gust) + ' ' + u : ''}`);
+    WM.layer.addLayer(m);
+  });
+
+  const h0 = WM.data[0].h;
+  renderShelter(h0.wind_direction_10m[i], h0.wind_speed_10m[i], h0.wind_gusts_10m ? h0.wind_gusts_10m[i] : null);
+}
+
+function renderShelter(dir, sp, gust){
+  if(dir == null || sp == null) return;
+  const u = unitLabel(state.windUnit);
+  document.getElementById('shelterNow').textContent =
+    `Wind from ${compassPoint(dir)} (${Math.round(dir)}°) at ${Math.round(sp)} ${u}` + (gust != null ? `, gusts ${Math.round(gust)} ${u}` : '');
+  const groups = { off:[], cross:[], on:[] };
+  document.getElementById('facingGrid').innerHTML = FACINGS.map(([name, deg]) => {
+    const dd = angDist(deg, dir);
+    const cls = dd <= 45 ? 'on' : dd >= 135 ? 'off' : 'cross';
+    groups[cls].push(name);
+    const txt = { off:'Sheltered', cross:'Cross-shore', on:'Exposed' }[cls];
+    return `<div class="facing ${cls}"><div class="fd">${name}</div><div class="fs">${txt}</div></div>`;
+  }).join('');
+  const kn = sp * (TO_KN[state.windUnit] || 1);
+  const light = kn < 6;
+  document.getElementById('shelterAdvice').innerHTML = light
+    ? `The wind is light (${Math.round(sp)} ${u}), so most beaches should be calm. If anything, pick one facing <b>${groups.off.join(' or ')}</b>.`
+    : `Best bet: beaches facing <b>${groups.off.join(' or ')}</b>. The land is between you and the wind there. ` +
+      `Avoid beaches facing <b>${groups.on.join(' or ')}</b>: the wind blows straight in off the water.`;
+}
+
+document.getElementById('wmTime').addEventListener('input', e => { WM.offset = Number(e.target.value); drawWindMap(); });
+document.getElementById('wmNow').addEventListener('click', () => { WM.offset = 0; document.getElementById('wmTime').value = 0; drawWindMap(); });
 
 function apiWindUnit(){ return { kn:'kn', mph:'mph', kmh:'kmh', ms:'ms' }[state.windUnit] || 'kn'; }
 
