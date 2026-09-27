@@ -222,8 +222,20 @@
   .wm-head{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:10px;}
   .wm-head .panel-label{margin-bottom:0;}
   .wm-when{font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--brass-bright);}
-  #windMap{height:340px; border-radius:10px; overflow:hidden; border:1px solid rgba(159,184,200,0.2); background:#0F3049;}
-  @media(max-width:480px){ #windMap{height:300px;} }
+  #windMap{height:360px; border-radius:12px; overflow:hidden; border:1px solid rgba(159,184,200,0.2); background:#0B2436;}
+  #windMap.wm-dark .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9) saturate(0.65);}
+  #windMap .leaflet-bar{border:1px solid rgba(159,184,200,0.3); box-shadow:0 2px 8px rgba(0,0,0,.35); border-radius:10px; overflow:hidden;}
+  #windMap .leaflet-bar a{background:rgba(15,48,73,0.92); color:var(--white-ish); border-bottom-color:rgba(159,184,200,0.2); width:34px; height:34px; line-height:34px;}
+  #windMap .leaflet-bar a:hover{background:var(--navy-panel-2);}
+  #windMap .leaflet-control-attribution{background:rgba(10,34,51,0.72); color:var(--fog); font-size:10px; border-top-left-radius:6px;}
+  #windMap .leaflet-control-attribution a{color:var(--brass-bright);}
+  #windMap .leaflet-popup-content-wrapper, #windMap .leaflet-popup-tip{background:#0F3049; color:var(--white-ish); box-shadow:0 6px 20px rgba(0,0,0,.4);}
+  #windMap .leaflet-popup-content{font-size:13px; line-height:1.45; margin:10px 14px;}
+  #windMap .leaflet-popup-close-button{color:var(--fog);}
+  .wm-seg{display:inline-flex; border:1px solid rgba(159,184,200,0.3); border-radius:999px; overflow:hidden;}
+  .wm-seg button{background:transparent; color:var(--fog); border:none; padding:5px 12px; font:600 12.5px 'Inter',sans-serif; cursor:pointer;}
+  .wm-seg button.on{background:var(--brass-bright); color:#0A2233;}
+  @media(max-width:480px){ #windMap{height:320px;} }
   .wm-msg{display:flex; align-items:center; justify-content:center; height:100%; padding:16px; text-align:center; color:var(--fog); font-size:14px;}
   .wm-slider{display:flex; align-items:center; gap:10px; margin-top:12px;}
   .wm-slider input{flex:1; accent-color:var(--brass-bright);}
@@ -615,6 +627,10 @@
         <button type="button" id="wmNow">Now</button>
       </div>
       <div class="wm-toggles" id="wmToggles">
+        <div class="wm-seg" id="wmStyle" role="group" aria-label="Map style">
+          <button type="button" data-style="map" class="on">Map</button>
+          <button type="button" data-style="satellite">Satellite</button>
+        </div>
         <label><input type="checkbox" data-layer="lines" checked> Wind lines</label>
         <label><input type="checkbox" data-layer="shores" checked> Sheltered shores</label>
         <label><input type="checkbox" data-layer="arrows"> Arrows</label>
@@ -1066,10 +1082,19 @@ function initWindMap(){
   box.innerHTML = '';
   WM.map = L.map(box, { zoomControl:true, scrollWheelZoom:false, attributionControl:true });
   WM.map.attributionControl.setPrefix(false);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    maxZoom: 16, subdomains: 'abcd',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a> · wind: Open-Meteo'
-  }).addTo(WM.map);
+  WM.bases = {
+    map: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 17,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · wind: Open-Meteo'
+    }),
+    satellite: L.layerGroup([
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 17, attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics · wind: Open-Meteo'
+      }),
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 17 })
+    ])
+  };
+  setMapStyle(state.mapStyle === 'satellite' ? 'satellite' : 'map');
   WM.map.createPane('coast').style.zIndex = 410;
   WM.map.createPane('windlines').style.zIndex = 420;
   WM.map.getPane('windlines').style.pointerEvents = 'none';
@@ -1093,6 +1118,16 @@ function initWindMap(){
   new IntersectionObserver((entries) => { WM.anim.setVisible(entries[0].isIntersecting); }).observe(box);
   return true;
 }
+
+function setMapStyle(style){
+  if(!WM.map) return;
+  Object.values(WM.bases).forEach(l => WM.map.removeLayer(l));
+  WM.bases[style].addTo(WM.map);
+  document.getElementById('windMap').classList.toggle('wm-dark', style === 'map');
+  document.querySelectorAll('#wmStyle button').forEach(b => b.classList.toggle('on', b.dataset.style === style));
+  if(state.mapStyle !== style){ state.mapStyle = style; saveState(); }
+}
+document.querySelectorAll('#wmStyle button').forEach(b => b.addEventListener('click', () => setMapStyle(b.dataset.style)));
 
 function refreshWindMap(){
   if(!state.location || !initWindMap()) return;
@@ -1198,7 +1233,7 @@ function createWindLines(map){
         field.v[k] = -(w.v / (w.speed || 1)) * kn * scale;
       }
     }
-    const count = Math.round(Math.min(1400, W * H / 220));
+    const count = Math.round(Math.min(700, W * H / 450));
     particles = Array.from({ length: count }, () => spawn({}, true));
   }
   function spawn(p, randomAge){
@@ -1211,7 +1246,7 @@ function createWindLines(map){
     const k = Math.min(field.rows - 1, Math.max(0, Math.round(y / cell))) * field.cols + Math.min(field.cols - 1, Math.max(0, Math.round(x / cell)));
     return k;
   }
-  const BANDS = [[8, 'rgba(24,120,112,0.85)'], [15, 'rgba(196,132,20,0.9)'], [22, 'rgba(214,100,30,0.9)'], [Infinity, 'rgba(200,52,42,0.95)']];
+  const BANDS = [[8, 'rgba(110,232,218,0.8)'], [15, 'rgba(246,200,90,0.85)'], [22, 'rgba(248,146,70,0.9)'], [Infinity, 'rgba(255,96,84,0.95)']];
   function frame(){
     raf = null;
     if(!running || !visible || !field) return;
@@ -1219,7 +1254,7 @@ function createWindLines(map){
     ctx.fillStyle = 'rgba(0,0,0,0.9)';
     ctx.fillRect(0, 0, W, H);
     ctx.globalCompositeOperation = 'source-over';
-    ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+    ctx.lineWidth = 1.5; ctx.lineCap = 'round';
     const paths = BANDS.map(() => new Path2D());
     for(const p of particles){
       const k = sample(p.x, p.y);
