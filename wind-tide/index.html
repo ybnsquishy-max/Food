@@ -248,6 +248,23 @@
   .shelter .advice b{color:var(--white-ish);}
   .shelter .fineprint{font-size:12px; color:var(--fog-dim); margin-top:8px; line-height:1.5;}
   .leaflet-container{font-family:'Inter',sans-serif;}
+  .wm-lines{position:absolute; left:0; top:0; pointer-events:none;}
+  .wm-toggles{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
+  .wm-toggles label{display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--white-ish); background:var(--navy-panel-2); border:1px solid rgba(159,184,200,0.25); border-radius:999px; padding:5px 11px; cursor:pointer;}
+  .wm-toggles input{accent-color:var(--brass-bright); margin:0;}
+  .wm-leg-title{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--fog-dim); min-width:42px;}
+  .wm-legend i.ln{width:16px; height:5px; border-radius:3px; vertical-align:2px;}
+  .wm-note{font-size:12.5px; color:var(--fog); margin:8px 0 0; min-height:0;}
+  .wm-note:empty{display:none;}
+  .beach-list{display:grid; gap:4px; margin-top:10px;}
+  .beach-list:empty{display:none;}
+  .bl-title{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--fog-dim); margin-bottom:2px;}
+  .bl-row{display:grid; grid-template-columns:12px 1fr auto auto; align-items:center; gap:8px; width:100%; text-align:left; background:var(--navy-panel-2); border:1px solid rgba(159,184,200,0.15); border-radius:8px; padding:8px 10px; color:var(--white-ish); font:500 13.5px 'Inter',sans-serif; cursor:pointer;}
+  .bl-dot{width:10px; height:10px; border-radius:50%; border:2px solid #0A2233;}
+  .bl-name{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .bl-face{font-size:12px; color:var(--fog);}
+  .bl-cls{font-size:12px; font-weight:700;}
+  .bl-cls.off{color:#5FD3A2;} .bl-cls.cross{color:#F0C98A;} .bl-cls.on{color:#F4A39A;}
 
   .compass-wrap{display:flex; align-items:center; gap:16px;}
   .compass{width:112px; height:112px; position:relative; flex-shrink:0;}
@@ -597,19 +614,32 @@
         <input type="range" id="wmTime" min="0" max="47" value="0" step="1">
         <button type="button" id="wmNow">Now</button>
       </div>
+      <div class="wm-toggles" id="wmToggles">
+        <label><input type="checkbox" data-layer="lines" checked> Wind lines</label>
+        <label><input type="checkbox" data-layer="shores" checked> Sheltered shores</label>
+        <label><input type="checkbox" data-layer="arrows"> Arrows</label>
+      </div>
       <div class="wm-legend">
-        <span>Arrows point the way the wind is blowing</span>
+        <span class="wm-leg-title">Wind</span>
         <span><i style="background:#3FA79A"></i>Light &lt;8 kn</span>
         <span><i style="background:#E3A94F"></i>Moderate 8–15</span>
         <span><i style="background:#E8833A"></i>Fresh 15–22</span>
         <span><i style="background:#E85C50"></i>Strong 22+</span>
       </div>
+      <div class="wm-legend">
+        <span class="wm-leg-title">Shore</span>
+        <span><i class="ln" style="background:#12A66B"></i>Sheltered</span>
+        <span><i class="ln" style="background:#E0A020"></i>Cross-shore</span>
+        <span><i class="ln" style="background:#E0483A"></i>Exposed</span>
+      </div>
+      <p class="wm-note" id="shoreNote"></p>
+      <div class="beach-list" id="beachList"></div>
       <div class="shelter" id="shelter">
         <h3>Which beaches are sheltered?</h3>
         <div class="now-line" id="shelterNow">—</div>
         <div class="facing-grid" id="facingGrid"></div>
         <p class="advice" id="shelterAdvice"></p>
-        <p class="fineprint">A beach is sheltered when the wind blows off the land (offshore). "Facing" is the direction you look when you stand on the sand looking out to sea.</p>
+        <p class="fineprint">A beach is sheltered when the wind blows off the land (offshore). "Facing" is the direction you look when you stand on the sand looking out to sea. Shore colours use the wind at each spot and the way the coastline faces there; tall headlands and cliffs can give extra shelter the map doesn't know about. Wind lines and arrows show where the wind is blowing to.</p>
       </div>
     </div>
 
@@ -1003,18 +1033,31 @@ async function fetchAll(){
 }
 
 /* ---------- Wind map ---------- */
-const WM = { map:null, tiles:null, layer:null, key:null, data:null, bounds:null, fetchedAt:0, unit:null, offset:0, req:0, timer:null };
+const WM = { map:null, layer:null, coastLayer:null, beachLayer:null, key:null, data:null, grid:null, bounds:null, fetchedAt:0, unit:null,
+  offset:0, req:0, timer:null, hourIdx:0, coast:null, coastReq:0, coastTimer:null, anim:null,
+  show:{ lines:true, arrows:false, shores:true } };
 const TO_KN = { kn:1, mph:0.868976, kmh:0.539957, ms:1.943844 };
 const FACINGS = [['N',0],['NE',45],['E',90],['SE',135],['S',180],['SW',225],['W',270],['NW',315]];
+const SHORE = { off:'#12A66B', cross:'#E0A020', on:'#E0483A' };
+const SHORE_TXT = { off:'Sheltered', cross:'Cross-shore', on:'Exposed' };
+const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+const REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+function toKn(v){ return v * (TO_KN[state.windUnit] || 1); }
 function windColor(speed){
-  const kn = speed * (TO_KN[state.windUnit] || 1);
+  const kn = toKn(speed);
   if(kn < 8) return '#3FA79A';
   if(kn < 15) return '#E3A94F';
   if(kn < 22) return '#E8833A';
   return '#E85C50';
 }
 function angDist(a, b){ const d = Math.abs(((a - b) % 360 + 360) % 360); return d > 180 ? 360 - d : d; }
+function shoreClass(facing, windFrom){ const d = angDist(facing, windFrom); return d <= 45 ? 'on' : d >= 135 ? 'off' : 'cross'; }
+function bearing(a, b){
+  const toR = Math.PI / 180, y = Math.sin((b[1] - a[1]) * toR) * Math.cos(b[0] * toR);
+  const x = Math.cos(a[0] * toR) * Math.sin(b[0] * toR) - Math.sin(a[0] * toR) * Math.cos(b[0] * toR) * Math.cos((b[1] - a[1]) * toR);
+  return (Math.atan2(y, x) / toR + 360) % 360;
+}
 
 function initWindMap(){
   if(WM.map) return true;
@@ -1022,18 +1065,32 @@ function initWindMap(){
   if(typeof L === 'undefined'){ box.innerHTML = '<div class="wm-msg">The map needs an internet connection. It will appear next time you are online.</div>'; return false; }
   box.innerHTML = '';
   WM.map = L.map(box, { zoomControl:true, scrollWheelZoom:false, attributionControl:true });
-  WM.tiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  WM.map.attributionControl.setPrefix(false);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     maxZoom: 16, subdomains: 'abcd',
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a> · wind: Open-Meteo'
   }).addTo(WM.map);
+  WM.map.createPane('coast').style.zIndex = 410;
+  WM.map.createPane('windlines').style.zIndex = 420;
+  WM.map.getPane('windlines').style.pointerEvents = 'none';
+  WM.coastLayer = L.layerGroup().addTo(WM.map);
+  WM.coastRenderer = L.canvas({ pane:'coast', padding:0.3 });
+  WM.beachLayer = L.layerGroup().addTo(WM.map);
   WM.layer = L.layerGroup().addTo(WM.map);
-  WM.map.attributionControl.setPrefix(false);
-  WM.map.on('moveend', () => { clearTimeout(WM.timer); WM.timer = setTimeout(() => loadWindGrid(false), 500); });
+  WM.anim = createWindLines(WM.map);
+  WM.map.on('movestart zoomstart', () => WM.anim.pause());
+  WM.map.on('moveend', () => {
+    WM.anim.reset();
+    clearTimeout(WM.timer); WM.timer = setTimeout(() => loadWindGrid(false), 500);
+    clearTimeout(WM.coastTimer); WM.coastTimer = setTimeout(loadCoast, 900);
+  });
   new ResizeObserver(() => {
     if(!box.clientWidth) return;
     WM.map.invalidateSize();
+    WM.anim.reset();
     clearTimeout(WM.timer); WM.timer = setTimeout(() => loadWindGrid(false), 300);
   }).observe(box);
+  new IntersectionObserver((entries) => { WM.anim.setVisible(entries[0].isIntersecting); }).observe(box);
   return true;
 }
 
@@ -1042,8 +1099,13 @@ function refreshWindMap(){
   const { lat, lon } = state.location;
   const key = lat.toFixed(4) + ',' + lon.toFixed(4);
   WM.map.invalidateSize();
-  if(WM.key !== key){ WM.key = key; WM.bounds = null; WM.offset = 0; document.getElementById('wmTime').value = 0; WM.map.setView([lat, lon], 11); }
+  if(WM.key !== key){
+    WM.key = key; WM.bounds = null; WM.coast = null; WM.offset = 0;
+    document.getElementById('wmTime').value = 0;
+    WM.map.setView([lat, lon], 12);
+  }
   loadWindGrid(true);
+  loadCoast();
 }
 
 async function loadWindGrid(force){
@@ -1075,12 +1137,214 @@ async function loadWindGrid(force){
     if(id !== WM.req) return;
     const list = Array.isArray(json) ? json : [json];
     WM.data = list.map((d, i) => ({ lat: pts[i][0], lon: pts[i][1], h: d.hourly }));
+    WM.grid = { rows, cols, s: b.getSouth(), n: b.getNorth(), w: b.getWest(), e: b.getEast() };
     WM.bounds = b; WM.fetchedAt = Date.now(); WM.unit = state.windUnit;
     drawWindMap();
   }catch(e){
     if(id === WM.req) showToast('Couldn\'t load the wind map. Check your connection.');
   }
 }
+
+/* Wind at a lat/lon, interpolated from the grid for the selected hour. Returns speed (user unit) and direction the wind comes from. */
+function windAt(lat, lon){
+  const g = WM.grid, d = WM.data, i = WM.hourIdx;
+  if(!g || !d) return null;
+  const fr = Math.max(0, Math.min(g.rows - 1, (lat - g.s) / (g.n - g.s) * g.rows - 0.5));
+  const fc = Math.max(0, Math.min(g.cols - 1, (lon - g.w) / (g.e - g.w) * g.cols - 0.5));
+  const r0 = Math.floor(fr), c0 = Math.floor(fc), r1 = Math.min(g.rows - 1, r0 + 1), c1 = Math.min(g.cols - 1, c0 + 1);
+  const tr = fr - r0, tc = fc - c0;
+  let u = 0, v = 0, wsum = 0;
+  [[r0, c0, (1 - tr) * (1 - tc)], [r0, c1, (1 - tr) * tc], [r1, c0, tr * (1 - tc)], [r1, c1, tr * tc]].forEach(([r, c, w]) => {
+    const pt = d[1 + r * g.cols + c];
+    if(!pt || !pt.h) return;
+    const sp = pt.h.wind_speed_10m[i], dir = pt.h.wind_direction_10m[i];
+    if(sp == null || dir == null) return;
+    const to = (dir + 180) * Math.PI / 180;
+    u += w * sp * Math.sin(to); v += w * sp * Math.cos(to); wsum += w;
+  });
+  if(!wsum) return null;
+  u /= wsum; v /= wsum;
+  return { speed: Math.hypot(u, v), from: (Math.atan2(u, v) * 180 / Math.PI + 180 + 360) % 360, u, v };
+}
+
+/* ---------- Animated wind lines ---------- */
+function createWindLines(map){
+  const pane = map.getPane('windlines');
+  const canvas = L.DomUtil.create('canvas', 'wm-lines', pane);
+  const ctx = canvas.getContext('2d');
+  let W = 0, H = 0, field = null, particles = [], raf = null, running = false, visible = true, cell = 12;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+  function buildField(){
+    const size = map.getSize();
+    W = size.x; H = size.y;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    L.DomUtil.setPosition(canvas, map.containerPointToLayerPoint([0, 0]));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if(!WM.grid){ field = null; return; }
+    const cols = Math.ceil(W / cell) + 1, rows = Math.ceil(H / cell) + 1;
+    field = { cols, rows, u: new Float32Array(cols * rows), v: new Float32Array(cols * rows), kn: new Float32Array(cols * rows) };
+    for(let y = 0; y < rows; y++){
+      for(let x = 0; x < cols; x++){
+        const ll = map.containerPointToLatLng([x * cell, y * cell]);
+        const w = windAt(ll.lat, ll.lng);
+        const k = y * cols + x;
+        if(!w) continue;
+        const kn = toKn(w.speed);
+        field.kn[k] = kn;
+        const scale = 0.09;
+        field.u[k] = (w.u / (w.speed || 1)) * kn * scale;
+        field.v[k] = -(w.v / (w.speed || 1)) * kn * scale;
+      }
+    }
+    const count = Math.round(Math.min(1400, W * H / 220));
+    particles = Array.from({ length: count }, () => spawn({}, true));
+  }
+  function spawn(p, randomAge){
+    p.x = Math.random() * W; p.y = Math.random() * H;
+    p.max = 40 + Math.random() * 60;
+    p.age = randomAge ? Math.random() * p.max : 0;
+    return p;
+  }
+  function sample(x, y){
+    const k = Math.min(field.rows - 1, Math.max(0, Math.round(y / cell))) * field.cols + Math.min(field.cols - 1, Math.max(0, Math.round(x / cell)));
+    return k;
+  }
+  const BANDS = [[8, 'rgba(24,120,112,0.85)'], [15, 'rgba(196,132,20,0.9)'], [22, 'rgba(214,100,30,0.9)'], [Infinity, 'rgba(200,52,42,0.95)']];
+  function frame(){
+    raf = null;
+    if(!running || !visible || !field) return;
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.fillStyle = 'rgba(0,0,0,0.9)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+    const paths = BANDS.map(() => new Path2D());
+    for(const p of particles){
+      const k = sample(p.x, p.y);
+      const nx = p.x + field.u[k], ny = p.y + field.v[k];
+      const kn = field.kn[k];
+      let bi = 0; while(kn >= BANDS[bi][0]) bi++;
+      paths[bi].moveTo(p.x, p.y); paths[bi].lineTo(nx, ny);
+      p.x = nx; p.y = ny; p.age++;
+      if(p.age > p.max || nx < 0 || ny < 0 || nx > W || ny > H) spawn(p, false);
+    }
+    paths.forEach((path, i) => { ctx.strokeStyle = BANDS[i][1]; ctx.stroke(path); });
+    raf = requestAnimationFrame(frame);
+  }
+  function start(){ if(!raf && running && visible && field && !REDUCED_MOTION && WM.show.lines) raf = requestAnimationFrame(frame); }
+  return {
+    reset(){ ctx.clearRect(0, 0, W, H); buildField(); running = true; start(); },
+    pause(){ running = false; if(raf){ cancelAnimationFrame(raf); raf = null; } ctx.clearRect(0, 0, W, H); },
+    setVisible(v){ visible = v; if(v) start(); }
+  };
+}
+
+/* ---------- Coastline shelter ---------- */
+async function loadCoast(){
+  if(!WM.map || !state.location) return;
+  const view = WM.map.getBounds();
+  const note = document.getElementById('shoreNote');
+  if(WM.map.getZoom() < 10){ WM.coastLayer.clearLayers(); WM.beachLayer.clearLayers(); note.textContent = 'Zoom in to see which shores are sheltered.'; renderBeachList([]); return; }
+  if(WM.coast && WM.coast.bounds.contains(view)){ drawCoast(); return; }
+  const b = view.pad(0.3);
+  const bbox = [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()].map(v => v.toFixed(4)).join(',');
+  const q = `[out:json][timeout:25];(way["natural"="coastline"](${bbox});way["natural"="beach"]["name"](${bbox});relation["natural"="beach"]["name"](${bbox}););out geom;`;
+  const id = ++WM.coastReq;
+  note.textContent = 'Loading coastline…';
+  for(const endpoint of OVERPASS){
+    try{
+      const res = await fetch(endpoint, { method:'POST', body:'data=' + encodeURIComponent(q), headers:{ 'Content-Type':'application/x-www-form-urlencoded' }, signal: AbortSignal.timeout(30000) });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const json = await res.json();
+      if(id !== WM.coastReq) return;
+      WM.coast = parseCoast(json, b);
+      drawCoast();
+      return;
+    }catch(e){ /* try the next server */ }
+  }
+  if(id === WM.coastReq) note.textContent = 'Couldn\'t load the coastline right now. The wind arrows still work.';
+}
+
+function parseCoast(json, bounds){
+  const segs = [], beaches = [];
+  (json.elements || []).forEach(el => {
+    const tags = el.tags || {};
+    if(el.type === 'way' && tags.natural === 'coastline' && el.geometry){
+      const pts = el.geometry.map(g => [g.lat, g.lon]);
+      for(let i = 0; i < pts.length - 1; i++){
+        const a = pts[Math.max(0, i - 2)], z = pts[Math.min(pts.length - 1, i + 3)];
+        // OpenStreetMap coastlines run with land on the left, so the sea is on the right.
+        const facing = (bearing(a, z) + 90) % 360;
+        segs.push({ a: pts[i], b: pts[i + 1], facing, way: el.id });
+      }
+    } else if(tags.natural === 'beach' && tags.name){
+      const geom = el.geometry || (el.members || []).flatMap(m => m.geometry || []);
+      if(!geom.length) return;
+      const lat = geom.reduce((s, g) => s + g.lat, 0) / geom.length;
+      const lon = geom.reduce((s, g) => s + g.lon, 0) / geom.length;
+      beaches.push({ name: tags.name, lat, lon });
+    }
+  });
+  const seen = new Set();
+  const named = beaches.filter(bch => !seen.has(bch.name) && seen.add(bch.name));
+  named.forEach(bch => {
+    let best = null, bestD = Infinity;
+    segs.forEach(s => {
+      const mlat = (s.a[0] + s.b[0]) / 2, mlon = (s.a[1] + s.b[1]) / 2;
+      const d = (mlat - bch.lat) ** 2 + ((mlon - bch.lon) * Math.cos(bch.lat * Math.PI / 180)) ** 2;
+      if(d < bestD){ bestD = d; best = s; }
+    });
+    bch.facing = best && bestD < 0.0004 ? best.facing : null;
+  });
+  return { bounds, segs, beaches: named.filter(bch => bch.facing != null) };
+}
+
+function drawCoast(){
+  WM.coastLayer.clearLayers(); WM.beachLayer.clearLayers();
+  const note = document.getElementById('shoreNote');
+  if(!WM.coast || !WM.grid || !WM.show.shores){ renderBeachList([]); if(!WM.show.shores) note.textContent = ''; return; }
+  if(!WM.coast.segs.length){ note.textContent = 'No sea coastline in view. Pan to the coast to see sheltered shores.'; renderBeachList([]); return; }
+  note.textContent = '';
+  let run = null;
+  const flush = () => { if(run && run.pts.length > 1) L.polyline(run.pts, { renderer: WM.coastRenderer, color: SHORE[run.cls], weight: 6, opacity: 0.95, lineCap:'round', interactive:false }).addTo(WM.coastLayer); };
+  WM.coast.segs.forEach(s => {
+    const w = windAt((s.a[0] + s.b[0]) / 2, (s.a[1] + s.b[1]) / 2);
+    if(!w) return;
+    const cls = toKn(w.speed) < 4 ? 'off' : shoreClass(s.facing, w.from);
+    if(run && run.cls === cls && run.way === s.way && run.last === s.a){ run.pts.push(s.b); run.last = s.b; return; }
+    flush();
+    run = { cls, way: s.way, pts: [s.a, s.b], last: s.b };
+  });
+  flush();
+
+  const view = WM.map.getBounds();
+  const rated = WM.coast.beaches.filter(bch => view.contains([bch.lat, bch.lon])).map(bch => {
+    const w = windAt(bch.lat, bch.lon);
+    return { ...bch, cls: w ? shoreClass(bch.facing, w.from) : 'cross', w };
+  });
+  rated.forEach(bch => {
+    L.circleMarker([bch.lat, bch.lon], { radius: 7, color: '#0A2233', weight: 2, fillColor: SHORE[bch.cls], fillOpacity: 1 })
+      .bindPopup(`<strong>${escapeHtml(bch.name)}</strong><br>Faces ${compassPoint(bch.facing)} · <span style="color:${SHORE[bch.cls]};font-weight:700">${SHORE_TXT[bch.cls]}</span>` +
+        (bch.w ? `<br>Wind ${Math.round(bch.w.speed)} ${unitLabel(state.windUnit)} from ${compassPoint(bch.w.from)}` : ''))
+      .addTo(WM.beachLayer);
+  });
+  renderBeachList(rated);
+}
+
+function renderBeachList(rated){
+  const box = document.getElementById('beachList');
+  if(!rated.length){ box.innerHTML = ''; return; }
+  const order = { off:0, cross:1, on:2 };
+  rated.sort((a, b) => order[a.cls] - order[b.cls] || a.name.localeCompare(b.name));
+  box.innerHTML = '<div class="bl-title">Beaches in view</div>' + rated.slice(0, 12).map(bch =>
+    `<button type="button" class="bl-row" data-lat="${bch.lat}" data-lon="${bch.lon}"><span class="bl-dot" style="background:${SHORE[bch.cls]}"></span><span class="bl-name">${escapeHtml(bch.name)}</span><span class="bl-face">faces ${compassPoint(bch.facing)}</span><span class="bl-cls ${bch.cls}">${SHORE_TXT[bch.cls]}</span></button>`).join('');
+}
+document.getElementById('beachList').addEventListener('click', e => {
+  const row = e.target.closest('.bl-row');
+  if(row && WM.map) WM.map.setView([Number(row.dataset.lat), Number(row.dataset.lon)], Math.max(WM.map.getZoom(), 14));
+});
 
 function arrowSvg(dir, color, home){
   const rot = (dir + 180) % 360;
@@ -1092,10 +1356,10 @@ function drawWindMap(){
   const times = WM.data[0].h.time;
   const nowI = nearestHourIndex(times);
   const i = Math.min(times.length - 1, nowI + WM.offset);
+  WM.hourIdx = i;
   const slider = document.getElementById('wmTime');
   slider.max = Math.max(0, Math.min(47, times.length - 1 - nowI));
-  const ms = wallClockToMs(times[i]);
-  const d = new Date(ms);
+  const d = new Date(wallClockToMs(times[i]));
   const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const label = days[d.getUTCDay()] + ' ' + String(d.getUTCHours()).padStart(2,'0') + ':00';
   document.getElementById('wmWhen').textContent = WM.offset === 0 ? 'Now · ' + label : '+' + WM.offset + 'h · ' + label;
@@ -1103,9 +1367,10 @@ function drawWindMap(){
   WM.layer.clearLayers();
   const u = unitLabel(state.windUnit);
   WM.data.forEach((pt, k) => {
+    const home = k === 0;
+    if(!home && !WM.show.arrows) return;
     const sp = pt.h.wind_speed_10m[i], dir = pt.h.wind_direction_10m[i], gust = pt.h.wind_gusts_10m ? pt.h.wind_gusts_10m[i] : null;
     if(sp == null || dir == null) return;
-    const home = k === 0;
     const icon = L.divIcon({ className: 'wm-icon' + (home ? ' home' : ''), iconSize: [44, 44], iconAnchor: [22, 22],
       html: arrowSvg(dir, windColor(sp), home) + `<b>${Math.round(sp)}</b>` });
     const m = L.marker([pt.lat, pt.lon], { icon, keyboard:false, zIndexOffset: home ? 1000 : 0 });
@@ -1113,6 +1378,8 @@ function drawWindMap(){
     WM.layer.addLayer(m);
   });
 
+  WM.anim.reset();
+  drawCoast();
   const h0 = WM.data[0].h;
   renderShelter(h0.wind_direction_10m[i], h0.wind_speed_10m[i], h0.wind_gusts_10m ? h0.wind_gusts_10m[i] : null);
 }
@@ -1124,14 +1391,11 @@ function renderShelter(dir, sp, gust){
     `Wind from ${compassPoint(dir)} (${Math.round(dir)}°) at ${Math.round(sp)} ${u}` + (gust != null ? `, gusts ${Math.round(gust)} ${u}` : '');
   const groups = { off:[], cross:[], on:[] };
   document.getElementById('facingGrid').innerHTML = FACINGS.map(([name, deg]) => {
-    const dd = angDist(deg, dir);
-    const cls = dd <= 45 ? 'on' : dd >= 135 ? 'off' : 'cross';
+    const cls = shoreClass(deg, dir);
     groups[cls].push(name);
-    const txt = { off:'Sheltered', cross:'Cross-shore', on:'Exposed' }[cls];
-    return `<div class="facing ${cls}"><div class="fd">${name}</div><div class="fs">${txt}</div></div>`;
+    return `<div class="facing ${cls}"><div class="fd">${name}</div><div class="fs">${SHORE_TXT[cls]}</div></div>`;
   }).join('');
-  const kn = sp * (TO_KN[state.windUnit] || 1);
-  const light = kn < 6;
+  const light = toKn(sp) < 6;
   document.getElementById('shelterAdvice').innerHTML = light
     ? `The wind is light (${Math.round(sp)} ${u}), so most beaches should be calm. If anything, pick one facing <b>${groups.off.join(' or ')}</b>.`
     : `Best bet: beaches facing <b>${groups.off.join(' or ')}</b>. The land is between you and the wind there. ` +
@@ -1140,6 +1404,12 @@ function renderShelter(dir, sp, gust){
 
 document.getElementById('wmTime').addEventListener('input', e => { WM.offset = Number(e.target.value); drawWindMap(); });
 document.getElementById('wmNow').addEventListener('click', () => { WM.offset = 0; document.getElementById('wmTime').value = 0; drawWindMap(); });
+document.querySelectorAll('#wmToggles input').forEach(inp => inp.addEventListener('change', () => {
+  WM.show[inp.dataset.layer] = inp.checked;
+  if(!WM.map) return;
+  if(inp.dataset.layer === 'lines'){ inp.checked ? WM.anim.reset() : WM.anim.pause(); }
+  else drawWindMap();
+}));
 
 function apiWindUnit(){ return { kn:'kn', mph:'mph', kmh:'kmh', ms:'ms' }[state.windUnit] || 'kn'; }
 
