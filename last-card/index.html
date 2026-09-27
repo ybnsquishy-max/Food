@@ -754,6 +754,25 @@ h1 {
 .legend-elo { font-size: 12px; color: var(--text-light); font-variant-numeric: tabular-nums; }
 .check-row { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; margin: 12px 0; line-height: 1.4; }
 .import-status { font-size: 13px; color: var(--text-light); margin: 12px 0 0; line-height: 1.5; }
+.result-modal { text-align: center; }
+.trophy { font-size: 56px; animation: pop .6s cubic-bezier(.2,1.6,.4,1) both; }
+@keyframes pop { from { transform: scale(.2) rotate(-20deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.result-title { font-size: 24px; font-weight: 900; margin: 8px 0 4px; text-wrap: balance; }
+.result-sub { font-size: 13px; color: var(--text-light); margin-bottom: 16px; }
+.result-list { display: grid; gap: 6px; text-align: left; }
+.result-row { display: grid; grid-template-columns: 32px 1fr auto; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); }
+.result-row.win { border-color: var(--gold); box-shadow: inset 4px 0 0 var(--gold); }
+.result-pos { font-size: 18px; text-align: center; }
+.result-name { font-weight: 600; }
+.result-total { font-weight: 900; font-size: 18px; font-variant-numeric: tabular-nums; }
+.history-title { font-size: 14px; text-transform: uppercase; letter-spacing: .5px; color: var(--text-light); margin: 24px 0 8px; }
+.history { display: grid; gap: 8px; }
+.history-game { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; background: var(--surface-2); }
+.history-head { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--text-light); margin-bottom: 6px; }
+.history-head span:first-child { font-weight: 700; color: var(--text); }
+.history-results { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.history-results .hw { font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .trophy { animation: none; } }
 .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); background: #1A1A1A; color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 2000; max-width: calc(100% - 32px); }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 @media (prefers-reduced-motion: reduce) { .boat-animation { animation: none; } .toast { transition: none; } }
@@ -819,7 +838,7 @@ body { padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) en
 
     <div class="round-card">
       <div class="round-card-head">
-        <span class="photo-label" style="margin:0;">Round <span id="roundNo">1</span></span>
+        <span class="photo-label" style="margin:0;">Game <span id="gameNo">1</span> · Round <span id="roundNo">1</span></span>
         <label class="photo-btn" for="photoInput">📷 <span id="photoBtnText">Add photo</span></label>
         <input type="file" id="photoInput" accept="image/*" hidden>
       </div>
@@ -835,7 +854,7 @@ body { padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) en
     <div class="players-grid" id="playersGrid"></div>
     <div class="controls">
       <button class="btn btn-primary" id="addPlayerBtn">+ Player</button>
-      <button class="btn btn-secondary" id="newGameBtn">New game</button>
+      <button class="btn btn-accent" id="endGameBtn">🏁 End game</button>
     </div>
   </div>
 
@@ -843,6 +862,7 @@ body { padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) en
   <div id="leaderboard" class="tab-content">
     <p class="hint">Ranked by ELO. Everyone starts at 1500. Ratings change each time you save a round, comparing every pair of players in it.</p>
     <div id="leaderboardContent"></div>
+    <div id="historyContent"></div>
   </div>
 
   <!-- ELO Chart Tab -->
@@ -939,6 +959,17 @@ Michael: 44, 51, 64, 123, 185, 298</textarea>
   </div>
 </div>
 
+<!-- Game Over Modal -->
+<div class="modal-overlay" id="resultModal">
+  <div class="modal result-modal" role="dialog" aria-labelledby="resultTitle">
+    <div class="trophy" aria-hidden="true">🏆</div>
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-sub" id="resultSub"></div>
+    <div class="result-list" id="resultList"></div>
+    <button class="btn btn-primary" id="resultClose" style="width:100%;margin-top:16px;">Start next game</button>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -963,14 +994,20 @@ function defaultState(){
       { id: 2, name: 'Aiden',   emoji: '⚡', scores: [21, 30, 2, 25, 11, 104, 74] },
       { id: 3, name: 'Michael', emoji: '🔥', scores: [44, 7, 13, 59, 62, 113] }
     ],
-    rounds: []
+    rounds: [],
+    pastRounds: [],
+    games: []
   };
 }
 
 function loadState(){
   try {
     const s = JSON.parse(readStore(KEY));
-    if (s && Array.isArray(s.players) && Array.isArray(s.rounds)) return s;
+    if (s && Array.isArray(s.players) && Array.isArray(s.rounds)){
+      s.pastRounds = s.pastRounds || [];
+      s.games = s.games || [];
+      return s;
+    }
   } catch(e){}
   return defaultState();
 }
@@ -986,10 +1023,12 @@ function save(){ writeStore(KEY, JSON.stringify(state)); renderAll(); }
 const total = (p) => p.scores.reduce((a, b) => a + b, 0);
 const beats = (a, b) => state.mode === 'low' ? a < b : a > b;
 
+const allRounds = () => [...state.pastRounds, ...state.rounds];
+
 function computeElo(){
   const elo = {}, hist = {};
   state.players.forEach(p => { elo[p.id] = START_ELO; hist[p.id] = []; });
-  state.rounds.forEach((round, r) => {
+  allRounds().forEach((round, r) => {
     const ids = Object.keys(round.pts).map(Number).filter(id => id in elo);
     if (ids.length < 2) return;
     ids.forEach(id => { if (!hist[id].length) hist[id].push({ r, elo: elo[id] }); });
@@ -1023,14 +1062,19 @@ function toast(msg){
 }
 
 function armed(btn, label, action){
-  if (btn.dataset.armed){ delete btn.dataset.armed; action(); return; }
+  if (btn.dataset.armed){
+    clearTimeout(btn._timer);
+    btn._disarm();
+    action();
+    return;
+  }
   const prev = btn.textContent;
   btn.dataset.armed = '1';
   btn.textContent = label;
   btn.classList.add('armed');
-  setTimeout(() => {
-    if (btn.isConnected && btn.dataset.armed){ delete btn.dataset.armed; btn.textContent = prev; btn.classList.remove('armed'); }
-  }, 3000);
+  const disarm = () => { delete btn.dataset.armed; btn.textContent = prev; btn.classList.remove('armed'); };
+  btn._disarm = disarm;
+  btn._timer = setTimeout(() => { if (btn.isConnected && btn.dataset.armed) disarm(); }, 3000);
 }
 
 /* ---------- Tabs ---------- */
@@ -1082,6 +1126,7 @@ function renderPhoto(){
 /* ---------- Rounds ---------- */
 function renderRoundInputs(){
   $('#roundNo').textContent = state.rounds.length + 1;
+  $('#gameNo').textContent = state.games.length + 1;
   $('#roundInputs').innerHTML = state.players.map(p => `
     <label class="round-field">
       <span>${p.emoji} ${esc(p.name)}</span>
@@ -1130,13 +1175,53 @@ $('#addPlayerBtn').addEventListener('click', () => {
   save();
 });
 
-$('#newGameBtn').addEventListener('click', (e) => armed(e.currentTarget, 'Tap again to clear scores', () => {
-  state.players.forEach(p => p.scores = []);
+function rankPlayers(){
+  return [...state.players].sort((a, b) => state.mode === 'low' ? total(a) - total(b) : total(b) - total(a));
+}
+
+$('#endGameBtn').addEventListener('click', (e) => {
+  if (!state.players.some(p => p.scores.length)){ toast('No scores yet. Play a round first.'); return; }
+  armed(e.currentTarget, 'Tap again to end game', endGame);
+});
+
+function endGame(){
+  const ranked = rankPlayers();
+  const best = total(ranked[0]);
+  const winners = ranked.filter(p => total(p) === best);
+  const game = {
+    date: new Date().toISOString(),
+    mode: state.mode,
+    rounds: Math.max(...state.players.map(p => p.scores.length)),
+    winnerIds: winners.map(p => p.id),
+    results: ranked.map(p => ({ id: p.id, name: p.name, emoji: p.emoji, total: total(p) }))
+  };
+  state.games.push(game);
+  state.pastRounds.push(...state.rounds);
+  game.roundEnd = state.pastRounds.length;
   state.rounds = [];
-  photo = null; removeStore('lastCardPhoto');
+  state.players.forEach(p => p.scores = []);
+  photo = null; removeStore('lastCardPhoto'); renderPhoto();
   save();
-  toast('New game started. Players kept.');
-}));
+  showResult(game);
+}
+
+function showResult(game){
+  const names = game.results.filter(r => game.winnerIds.includes(r.id));
+  $('#resultTitle').textContent = names.length > 1
+    ? `It's a tie: ${names.map(r => r.name).join(' & ')}`
+    : `${names[0].emoji} ${names[0].name} wins!`;
+  $('#resultSub').textContent = `Game ${state.games.length} · ${game.rounds} rounds · ${game.mode === 'low' ? 'lowest' : 'highest'} total wins`;
+  const medals = ['🥇', '🥈', '🥉'];
+  $('#resultList').innerHTML = game.results.map((r, i) => `
+    <div class="result-row ${game.winnerIds.includes(r.id) ? 'win' : ''}">
+      <span class="result-pos">${medals[i] || i + 1}</span>
+      <span class="result-name">${r.emoji} ${esc(r.name)}</span>
+      <span class="result-total">${r.total}</span>
+    </div>`).join('');
+  $('#resultModal').classList.add('active');
+}
+
+$('#resultClose').addEventListener('click', () => { $('#resultModal').classList.remove('active'); toast(`Game ${state.games.length + 1} started`); });
 
 $('#playersGrid').addEventListener('click', (e) => {
   const btn = e.target.closest('[data-act]');
@@ -1269,11 +1354,24 @@ function renderLeaderboard(){
       <div class="player-emoji">${p.emoji}</div>
       <div class="player-info-lb">
         <div class="player-lb-name">${esc(p.name)}</div>
-        <div class="player-lb-stats">${total(p)} points · ${p.scores.length} rounds</div>
+        <div class="player-lb-stats">${wins(p.id)} ${wins(p.id) === 1 ? 'win' : 'wins'} · ${total(p)} points this game</div>
       </div>
       <div class="elo-display">${elo[p.id]}</div>
     </div>`).join('')}</div>` : '<p class="hint">No players yet.</p>';
+
+  $('#historyContent').innerHTML = state.games.length ? `
+    <h2 class="history-title">Past games</h2>
+    <div class="history">${[...state.games].reverse().map((g, i) => `
+      <div class="history-game">
+        <div class="history-head">
+          <span>Game ${state.games.length - i}</span>
+          <span>${new Date(g.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} · ${g.rounds} rounds</span>
+        </div>
+        <div class="history-results">${g.results.map(r => `<span class="${g.winnerIds.includes(r.id) ? 'hw' : ''}">${g.winnerIds.includes(r.id) ? '🏆 ' : ''}${r.emoji} ${esc(r.name)} ${r.total}</span>`).join('')}</div>
+      </div>`).join('')}</div>` : '';
 }
+
+const wins = (id) => state.games.filter(g => g.winnerIds.includes(id)).length;
 
 function drawEloChart(){
   const canvas = $('#eloCanvas');
@@ -1281,7 +1379,7 @@ function drawEloChart(){
   container.querySelectorAll('.player-boat').forEach(b => b.remove());
   const { hist } = computeElo();
   const lines = state.players.map((p, i) => ({ p, color: LINE_COLORS[i % LINE_COLORS.length], pts: hist[p.id] })).filter(l => l.pts.length);
-  const maxR = state.rounds.length;
+  const maxR = allRounds().length;
   const empty = maxR === 0 || !lines.length;
   $('#chartEmpty').hidden = !empty;
   canvas.hidden = empty;
@@ -1324,6 +1422,15 @@ function drawEloChart(){
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   const step = Math.max(1, Math.ceil(maxR / 8));
   for (let r = 0; r <= maxR; r += step) ctx.fillText(r === 0 ? 'Start' : `R${r}`, X(r), height - pad.b + 8);
+
+  ctx.setLineDash([4, 4]); ctx.strokeStyle = tok('--text-light'); ctx.lineWidth = 1; ctx.textBaseline = 'bottom';
+  state.games.forEach((g, gi) => {
+    if (!g.roundEnd || g.roundEnd > maxR) return;
+    const x = X(g.roundEnd);
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, height - pad.b); ctx.stroke();
+    ctx.fillText(`Game ${gi + 1}`, x, pad.t - 4);
+  });
+  ctx.setLineDash([]);
 
   lines.forEach(l => {
     ctx.strokeStyle = l.color; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
