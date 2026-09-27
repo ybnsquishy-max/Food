@@ -854,6 +854,7 @@ body { padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) en
     <div class="players-grid" id="playersGrid"></div>
     <div class="controls">
       <button class="btn btn-primary" id="addPlayerBtn">+ Player</button>
+      <button class="btn btn-secondary" id="newGameBtn">↺ New game</button>
       <button class="btn btn-accent" id="endGameBtn">🏁 End game</button>
     </div>
   </div>
@@ -1182,6 +1183,17 @@ function rankPlayers(){
 $('#endGameBtn').addEventListener('click', (e) => {
   if (!state.players.some(p => p.scores.length)){ toast('No scores yet. Play a round first.'); return; }
   armed(e.currentTarget, 'Tap again to end game', endGame);
+});
+
+$('#newGameBtn').addEventListener('click', (e) => {
+  if (!state.players.some(p => p.scores.length)){ toast('Already a fresh game'); return; }
+  armed(e.currentTarget, 'Tap again to discard scores', () => {
+    state.rounds = [];
+    state.players.forEach(p => p.scores = []);
+    photo = null; removeStore('lastCardPhoto'); renderPhoto();
+    save();
+    toast("New game started. The last one wasn't saved.");
+  });
 });
 
 function endGame(){
