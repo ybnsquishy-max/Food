@@ -5,6 +5,7 @@
 const BUILD = '__BUILD__';
 const CACHE = 'mise-app-' + BUILD;
 const FONT_CACHE = 'mise-fonts';
+const OTHER_APPS = ['wind-tide/', 'last-card/'];
 
 const CORE = [
   './',
@@ -44,6 +45,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   if (url.origin !== self.location.origin) return;
+  // Surge and Last Card live in sub-folders with their own service workers.
+  if (OTHER_APPS.some((dir) => url.href.startsWith(self.registration.scope + dir))) return;
 
   if (req.mode === 'navigate') {
     event.respondWith(networkFirst(req));

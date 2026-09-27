@@ -1,9 +1,9 @@
-name: Deploy Apps (Mise + Wind & Tide)
+name: Deploy Apps (Mise + Surge + Last Card)
 
 on:
   push:
     branches: [main]
-    paths: ['app/**', 'wind-tide/**', '.github/workflows/deploy.yml']
+    paths: ['app/**', 'wind-tide/**', 'last-card/**', '.github/workflows/deploy.yml']
   workflow_dispatch:
 
 permissions:
@@ -34,6 +34,10 @@ jobs:
           mkdir -p _site/wind-tide
           cp -r wind-tide/. _site/wind-tide/
           sed -i "s/__BUILD__/${BUILD}/g" _site/wind-tide/sw.js _site/wind-tide/index.html
+          # Deploy Last Card
+          mkdir -p _site/last-card
+          cp -r last-card/. _site/last-card/
+          sed -i "s/__BUILD__/${BUILD}/g" _site/last-card/sw.js
           echo "Built ${BUILD}"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

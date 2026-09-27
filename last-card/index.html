@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Last Card</title>
+<meta name="description" content="Track UNO scores, ELO ratings and score-sheet photos.">
+<meta name="theme-color" content="#101A36">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Last Card">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+:root {
+  --primary: #FF6B6B;
+  --primary-dark: #E74C3C;
+  --accent: #4ECDC4;
+  --accent-dark: #45B7AA;
+  --gold: #F1C40F;
+  --surface: #FFFFFF;
+  --surface-2: #F8F9FA;
+  --border: #E0E0E0;
+  --text: #1A1A1A;
+  --text-light: #666666;
+  --success: #27AE60;
+  --warning: #F39C12;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface: #1A1A1A;
+    --surface-2: #252525;
+    --border: #333333;
+    --text: #FFFFFF;
+    --text-light: #AAAAAA;
+  }
+}
+
+:root[data-theme="dark"] {
+  --surface: #1A1A1A;
+  --surface-2: #252525;
+  --border: #333333;
+  --text: #FFFFFF;
+  --text-light: #AAAAAA;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background: var(--surface);
+  color: var(--text);
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+header {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  padding: 24px 16px;
+  text-align: center;
+  color: white;
+  margin-bottom: 24px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.header-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+.header-subtitle {
+  font-size: 12px;
+  opacity: 0.9;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--border);
+}
+
+.tab-btn {
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.players-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.player-card {
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.player-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.1);
+}
+
+.player-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.emoji-btn {
+  font-size: 32px;
+  background: none;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: all 0.2s ease;
+}
+
+.emoji-btn:hover {
+  transform: scale(1.1);
+  border-color: var(--accent);
+}
+
+.player-info {
+  flex: 1;
+}
+
+.player-name {
+  font-size: 14px;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.player-name-input {
+  font-size: 16px;
+  font-weight: 600;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.remove-btn {
+  padding: 8px;
+  border: none;
+  background: none;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 18px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.remove-btn:hover {
+  opacity: 1;
+  color: var(--primary);
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.stat {
+  background: var(--surface);
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--primary);
+}
+
+.stat-value.elo {
+  color: var(--accent);
+}
+
+.stat-value.avg {
+  color: var(--warning);
+}
+
+.score-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.score-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.score-input::placeholder {
+  color: var(--text-light);
+}
+
+.btn-small {
+  padding: 10px 12px;
+  border: none;
+  border-radius: 6px;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.btn-small:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.rounds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.round-badge {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.round-remove {
+  cursor: pointer;
+  opacity: 0.6;
+  font-size: 11px;
+}
+
+.round-remove:hover {
+  opacity: 1;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.btn {
+  flex: 1;
+  min-width: 140px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+.btn-secondary {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--border);
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-accent:hover {
+  background: var(--accent-dark);
+  transform: translateY(-2px);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.btn-danger:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.import-section {
+  background: var(--surface-2);
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.import-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-light);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.import-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 13px;
+  resize: vertical;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.emoji-picker {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  padding: 12px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.emoji-option {
+  font-size: 28px;
+  padding: 8px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--surface);
+}
+
+.emoji-option:hover {
+  border-color: var(--accent);
+  transform: scale(1.2);
+}
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.leaderboard {
+  display: grid;
+  gap: 12px;
+}
+
+.leaderboard-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.rank {
+  font-size: 20px;
+  font-weight: 900;
+  min-width: 32px;
+  text-align: center;
+}
+
+
+.player-info-lb {
+  flex: 1;
+}
+
+.player-emoji {
+  font-size: 24px;
+}
+
+.player-lb-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.player-lb-stats {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.elo-display {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text-light);
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.rules-content {
+  display: grid;
+  gap: 16px;
+}
+
+.rule-section {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.rule-section h2 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.rule-section p {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.rule-section p:last-child {
+  margin-bottom: 0;
+}
+
+.rule-list {
+  margin: 0;
+  padding-left: 20px;
+  list-style: none;
+}
+
+.rule-list li {
+  margin-bottom: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.rule-list li:last-child {
+  margin-bottom: 0;
+}
+
+.rule-list strong {
+  color: var(--primary);
+}
+
+.chart-container {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+#eloCanvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: var(--surface);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.boat-animation {
+  font-size: 20px;
+  position: absolute;
+  animation: float 2s ease-in-out infinite;
+  z-index: 10;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.player-boat {
+  font-size: 24px;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translate(-50%, -50%) translateY(0);
+  }
+  50% {
+    transform: translate(-50%, -50%) translateY(-8px);
+  }
+}
+
+.chart-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--surface-2);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.legend-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.legend-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.legend-emoji {
+  font-size: 14px;
+}
+
+.round-photo-section {
+  background: var(--surface-2);
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.photo-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-light);
+  display: block;
+  margin-bottom: 12px;
+}
+
+.photo-upload-area {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.photo-upload-area:hover {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.05), rgba(78, 205, 196, 0.05));
+}
+
+.photo-upload-area img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.photo-remove {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tabs { overflow-x: auto; scrollbar-width: none; gap: 0; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab-btn { white-space: nowrap; flex-shrink: 0; padding: 12px 12px; font-size: 13px; }
+.rank { color: var(--text-light); }
+.hint { font-size: 13px; color: var(--text-light); margin: 0 0 12px; line-height: 1.5; }
+.standings { display: grid; gap: 6px; margin-bottom: 16px; }
+.standing { display: grid; grid-template-columns: 20px 28px 1fr auto; grid-template-rows: auto auto; column-gap: 8px; align-items: center; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
+.standing.lead { border-color: var(--accent); box-shadow: inset 4px 0 0 var(--accent); }
+.standing-pos { grid-row: span 2; font-weight: 900; color: var(--text-light); font-variant-numeric: tabular-nums; }
+.standing-emoji { grid-row: span 2; font-size: 22px; }
+.standing-name { font-weight: 600; }
+.standing-total { grid-row: span 2; font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.standing-gap { font-size: 12px; color: var(--text-light); }
+.mode-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.seg button { border: none; background: var(--surface); color: var(--text-light); padding: 8px 12px; font: 600 13px -apple-system, BlinkMacSystemFont, sans-serif; cursor: pointer; }
+.seg button.on { background: var(--accent); color: #fff; }
+.round-card { background: var(--surface-2); border: 2px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+.round-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.photo-btn { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 6px; padding: 8px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.photo-wrap { text-align: center; margin-bottom: 12px; }
+.photo-wrap img { max-width: 100%; max-height: 320px; border-radius: 8px; display: block; margin: 0 auto 8px; }
+.round-inputs { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.round-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--text-light); }
+.round-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.round-actions .btn { min-width: 0; }
+.round-remove { border: none; background: none; color: inherit; padding: 0 0 0 4px; font-size: 11px; }
+.emoji-option { font-family: inherit; line-height: 1; }
+.btn.armed, .remove-btn.armed { background: var(--primary); color: #fff; opacity: 1; border-color: var(--primary); }
+.remove-btn.armed { font-size: 12px; border-radius: 6px; }
+.chart-empty { padding: 48px 16px; text-align: center; color: var(--text-light); font-size: 14px; }
+.legend-elo { font-size: 12px; color: var(--text-light); font-variant-numeric: tabular-nums; }
+.check-row { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; margin: 12px 0; line-height: 1.4; }
+.import-status { font-size: 13px; color: var(--text-light); margin: 12px 0 0; line-height: 1.5; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); background: #1A1A1A; color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 2000; max-width: calc(100% - 32px); }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .boat-animation { animation: none; } .toast { transition: none; } }
+
+body { padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); -webkit-tap-highlight-color: transparent; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="header-icon" style="line-height: 1;">
+      <svg width="56" height="56" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+        <defs>
+          <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#FF6B6B;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#E74C3C;stop-opacity:1" />
+          </linearGradient>
+          <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#4ECDC4;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#45B7AA;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <circle cx="120" cy="120" r="115" fill="white" stroke="#E0E0E0" stroke-width="2"/>
+        <g transform="translate(80, 110) rotate(-20)">
+          <rect x="0" y="0" width="60" height="85" rx="6" fill="url(#grad1)"/>
+          <circle cx="10" cy="10" r="3" fill="white" opacity="0.8"/>
+          <path d="M 5 45 L 55 80" stroke="white" stroke-width="1.5" opacity="0.6"/>
+        </g>
+        <rect x="75" y="55" width="90" height="130" rx="8" fill="#FFE66D" stroke="#F39C12" stroke-width="2"/>
+        <circle cx="90" cy="75" r="5" fill="#F39C12" opacity="0.6"/>
+        <text x="120" y="135" text-anchor="middle" font-size="64" font-weight="900" fill="#F39C12">L</text>
+        <g transform="translate(160, 110) rotate(20)">
+          <rect x="0" y="0" width="60" height="85" rx="6" fill="url(#grad2)"/>
+          <circle cx="50" cy="10" r="3" fill="white" opacity="0.8"/>
+          <path d="M 55 45 L 5 80" stroke="white" stroke-width="1.5" opacity="0.6"/>
+        </g>
+        <circle cx="120" cy="120" r="110" fill="none" stroke="#FF6B6B" stroke-width="1.5" opacity="0.15"/>
+      </svg>
+    </div>
+    <h1>Last Card</h1>
+    <div class="header-subtitle">UNO Score & Rating Tracker</div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab-btn active" data-tab="game">Game</button>
+    <button class="tab-btn" data-tab="leaderboard">Leaderboard</button>
+    <button class="tab-btn" data-tab="chart">ELO Chart</button>
+    <button class="tab-btn" data-tab="rules">Rules</button>
+    <button class="tab-btn" data-tab="import">Import</button>
+  </div>
+
+  <!-- Game Tab -->
+  <div id="game" class="tab-content active">
+    <div class="standings" id="standings"></div>
+
+    <div class="mode-row">
+      <span class="photo-label" style="margin:0;">Winner is</span>
+      <div class="seg" id="modeSeg">
+        <button data-mode="low">Lowest total</button>
+        <button data-mode="high">Highest total</button>
+      </div>
+    </div>
+
+    <div class="round-card">
+      <div class="round-card-head">
+        <span class="photo-label" style="margin:0;">Round <span id="roundNo">1</span></span>
+        <label class="photo-btn" for="photoInput">📷 <span id="photoBtnText">Add photo</span></label>
+        <input type="file" id="photoInput" accept="image/*" hidden>
+      </div>
+      <div id="photoPreview"></div>
+      <p class="hint">Enter the points each person got this round. Leave a box empty for 0 (the person who went out).</p>
+      <div id="roundInputs" class="round-inputs"></div>
+      <div class="round-actions">
+        <button class="btn btn-accent" id="saveRoundBtn">Save round</button>
+        <button class="btn btn-secondary" id="undoRoundBtn">Undo last round</button>
+      </div>
+    </div>
+
+    <div class="players-grid" id="playersGrid"></div>
+    <div class="controls">
+      <button class="btn btn-primary" id="addPlayerBtn">+ Player</button>
+      <button class="btn btn-secondary" id="newGameBtn">New game</button>
+    </div>
+  </div>
+
+  <!-- Leaderboard Tab -->
+  <div id="leaderboard" class="tab-content">
+    <p class="hint">Ranked by ELO. Everyone starts at 1500. Ratings change each time you save a round, comparing every pair of players in it.</p>
+    <div id="leaderboardContent"></div>
+  </div>
+
+  <!-- ELO Chart Tab -->
+  <div id="chart" class="tab-content">
+    <div class="chart-container">
+      <canvas id="eloCanvas"></canvas>
+      <div class="chart-empty" id="chartEmpty" hidden>Save a round on the Game tab to start the chart.</div>
+    </div>
+    <div class="chart-legend" id="chartLegend"></div>
+  </div>
+
+  <!-- Rules Tab -->
+  <div id="rules" class="tab-content">
+    <div class="rules-content">
+      <div class="rule-section">
+        <h2>🎮 Object of the game</h2>
+        <p>Be the first to play every card in your hand. When one player goes out, the round ends and points are counted from the cards left in hands.</p>
+      </div>
+
+      <div class="rule-section">
+        <h2>🃏 Card values</h2>
+        <ul class="rule-list">
+          <li><strong>Number cards (0–9):</strong> face value</li>
+          <li><strong>Skip, Reverse, Draw Two:</strong> 20 points each</li>
+          <li><strong>Wild, Wild Draw Four:</strong> 50 points each</li>
+        </ul>
+      </div>
+
+      <div class="rule-section">
+        <h2>🎯 Your turn</h2>
+        <ul class="rule-list">
+          <li>Match the top card of the discard pile by colour, number or symbol.</li>
+          <li>A Wild can be played any time; you choose the next colour.</li>
+          <li>A Wild Draw Four can only be played when you have no card matching the current colour. The next player may challenge it.</li>
+          <li>If you can't play, draw one card. If it can be played, you may play it straight away.</li>
+          <li>Say "UNO" when you play your second-last card. If someone catches you first, draw 2.</li>
+        </ul>
+      </div>
+
+      <div class="rule-section">
+        <h2>⚡ Action cards</h2>
+        <ul class="rule-list">
+          <li><strong>Skip:</strong> the next player misses a turn.</li>
+          <li><strong>Reverse:</strong> play changes direction. With 2 players it acts like a Skip.</li>
+          <li><strong>Draw Two:</strong> the next player draws 2 and misses a turn.</li>
+          <li><strong>Wild Draw Four:</strong> choose the colour; the next player draws 4 and misses a turn.</li>
+        </ul>
+      </div>
+
+      <div class="rule-section">
+        <h2>🏁 Two ways to keep score</h2>
+        <ul class="rule-list">
+          <li><strong>Lowest total wins (common at home):</strong> each player adds the points left in their own hand. When someone passes the limit (often 500), the lowest total wins. This is how your score sheet works.</li>
+          <li><strong>Highest total wins (official rules):</strong> the player who went out collects the points from everyone else's hands. First to 500 wins.</li>
+          <li>Pick the one you play on the Game tab under "Winner is".</li>
+        </ul>
+      </div>
+
+      <div class="rule-section">
+        <h2>💡 House rules (optional)</h2>
+        <ul class="rule-list">
+          <li><strong>Stacking:</strong> answer a Draw Two with a Draw Two (or Draw Four with Draw Four) to pass the penalty on.</li>
+          <li><strong>Jump in:</strong> play an identical card (same colour and number) out of turn.</li>
+          <li><strong>Seven-O:</strong> playing a 7 swaps hands with a player you choose; playing a 0 passes every hand in the direction of play.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Tab -->
+  <div id="import" class="tab-content">
+    <div class="import-section">
+      <label class="import-label" for="importText">Paste scores from your notes, one person per line</label>
+      <textarea class="import-textarea" id="importText">Shelley: 54, 56, 82, 92, 200, 275, 319
+Aiden: 21, 51, 53, 78, 89, 193, 267
+Michael: 44, 51, 64, 123, 185, 298</textarea>
+      <label class="check-row">
+        <input type="checkbox" id="runningTotals" checked>
+        These are running totals (crossed out and rewritten each round)
+      </label>
+      <p class="hint">Importing replaces the scores of anyone with the same name. New names are added as players. ELO ratings only come from rounds saved on the Game tab.</p>
+      <button class="btn btn-accent" id="importBtn">Import scores</button>
+      <p class="import-status" id="importStatus"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Emoji Picker Modal -->
+<div class="modal-overlay" id="emojiModal">
+  <div class="modal">
+    <div class="modal-title">Choose an emoji</div>
+    <div class="emoji-picker" id="emojiPicker"></div>
+    <button class="btn btn-secondary" id="emojiClose" style="width:100%;margin-top:12px;">Close</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const EMOJIS = ['🎮','🎲','👑','🌟','⚡','🔥','🎯','🚀','💪','🧠','😎','🤖','🦸','🎭','🎪','🎨','💎','🏆','🎸','🎤','🐶','🐱','🦁','🐸','🦅','🦊','🐻','🐼','⛵','🐢'];
+const LINE_COLORS = ['#FF6B6B','#2BB3A8','#E0A800','#6C7BFF','#E0529C','#3FA34D'];
+const START_ELO = 1500, K = 32;
+const KEY = 'lastCardData_v3';
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function readStore(key){ try { return localStorage.getItem(key); } catch(e){ return null; } }
+function writeStore(key, val){ try { localStorage.setItem(key, val); return true; } catch(e){ return false; } }
+function removeStore(key){ try { localStorage.removeItem(key); } catch(e){} }
+
+function defaultState(){
+  return {
+    mode: 'low',
+    nextId: 4,
+    players: [
+      { id: 1, name: 'Shelley', emoji: '👑', scores: [54, 2, 26, 10, 108, 75, 44] },
+      { id: 2, name: 'Aiden',   emoji: '⚡', scores: [21, 30, 2, 25, 11, 104, 74] },
+      { id: 3, name: 'Michael', emoji: '🔥', scores: [44, 7, 13, 59, 62, 113] }
+    ],
+    rounds: []
+  };
+}
+
+function loadState(){
+  try {
+    const s = JSON.parse(readStore(KEY));
+    if (s && Array.isArray(s.players) && Array.isArray(s.rounds)) return s;
+  } catch(e){}
+  return defaultState();
+}
+
+let state = loadState();
+let photo = readStore('lastCardPhoto');
+let activeTab = 'game';
+let emojiFor = null;
+
+function save(){ writeStore(KEY, JSON.stringify(state)); renderAll(); }
+
+/* ---------- Scoring + ELO ---------- */
+const total = (p) => p.scores.reduce((a, b) => a + b, 0);
+const beats = (a, b) => state.mode === 'low' ? a < b : a > b;
+
+function computeElo(){
+  const elo = {}, hist = {};
+  state.players.forEach(p => { elo[p.id] = START_ELO; hist[p.id] = []; });
+  state.rounds.forEach((round, r) => {
+    const ids = Object.keys(round.pts).map(Number).filter(id => id in elo);
+    if (ids.length < 2) return;
+    ids.forEach(id => { if (!hist[id].length) hist[id].push({ r, elo: elo[id] }); });
+    const delta = {};
+    ids.forEach(id => delta[id] = 0);
+    const k = K / (ids.length - 1);
+    for (let i = 0; i < ids.length; i++){
+      for (let j = i + 1; j < ids.length; j++){
+        const a = ids[i], b = ids[j];
+        const pa = round.pts[a], pb = round.pts[b];
+        const expected = 1 / (1 + Math.pow(10, (elo[b] - elo[a]) / 400));
+        const actual = pa === pb ? 0.5 : (beats(pa, pb) ? 1 : 0);
+        const d = k * (actual - expected);
+        delta[a] += d; delta[b] -= d;
+      }
+    }
+    ids.forEach(id => { elo[id] += delta[id]; hist[id].push({ r: r + 1, elo: elo[id] }); });
+  });
+  Object.keys(elo).forEach(id => elo[id] = Math.round(elo[id]));
+  return { elo, hist };
+}
+
+/* ---------- Toast + two-tap confirm ---------- */
+let toastTimer;
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function armed(btn, label, action){
+  if (btn.dataset.armed){ delete btn.dataset.armed; action(); return; }
+  const prev = btn.textContent;
+  btn.dataset.armed = '1';
+  btn.textContent = label;
+  btn.classList.add('armed');
+  setTimeout(() => {
+    if (btn.isConnected && btn.dataset.armed){ delete btn.dataset.armed; btn.textContent = prev; btn.classList.remove('armed'); }
+  }, 3000);
+}
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
+  activeTab = btn.dataset.tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === activeTab));
+  if (activeTab === 'leaderboard') renderLeaderboard();
+  if (activeTab === 'chart') drawEloChart();
+}));
+
+/* ---------- Scoring mode ---------- */
+document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('click', () => {
+  state.mode = b.dataset.mode;
+  save();
+  toast(state.mode === 'low' ? 'Lowest total wins' : 'Highest total wins');
+}));
+
+/* ---------- Photo ---------- */
+$('#photoInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = () => {
+    const scale = Math.min(1, 1200 / Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width * scale);
+    c.height = Math.round(img.height * scale);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    photo = c.toDataURL('image/jpeg', 0.8);
+    if (!writeStore('lastCardPhoto', photo)) toast('Photo shown, but too large to keep after closing');
+    renderPhoto();
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); toast("That file couldn't be opened as a photo"); };
+  img.src = url;
+});
+
+function renderPhoto(){
+  const box = $('#photoPreview');
+  $('#photoBtnText').textContent = photo ? 'Replace photo' : 'Add photo';
+  if (!photo){ box.innerHTML = ''; return; }
+  box.innerHTML = `<div class="photo-wrap"><img src="${photo}" alt="Score sheet photo"><button class="photo-remove" id="photoRemove">Remove photo</button></div>`;
+  $('#photoRemove').addEventListener('click', () => { photo = null; removeStore('lastCardPhoto'); renderPhoto(); });
+}
+
+/* ---------- Rounds ---------- */
+function renderRoundInputs(){
+  $('#roundNo').textContent = state.rounds.length + 1;
+  $('#roundInputs').innerHTML = state.players.map(p => `
+    <label class="round-field">
+      <span>${p.emoji} ${esc(p.name)}</span>
+      <input type="number" inputmode="numeric" min="0" id="rin-${p.id}" data-id="${p.id}" placeholder="0" class="score-input">
+    </label>`).join('');
+  $('#roundInputs').querySelectorAll('input').forEach(inp => inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveRound();
+  }));
+}
+
+function saveRound(){
+  if (state.players.length < 2){ toast('Add at least 2 players first'); return; }
+  const pts = {};
+  let anyTyped = false, bad = false;
+  state.players.forEach(p => {
+    const raw = $(`#rin-${p.id}`).value.trim();
+    if (raw !== '') anyTyped = true;
+    const n = raw === '' ? 0 : Number(raw);
+    if (!Number.isFinite(n) || n < 0 || !Number.isInteger(n)) bad = true;
+    pts[p.id] = n;
+  });
+  if (bad){ toast('Points must be whole numbers, 0 or more'); return; }
+  if (!anyTyped){ toast('Type at least one score for this round'); return; }
+  state.players.forEach(p => p.scores.push(pts[p.id]));
+  state.rounds.push({ pts });
+  save();
+  toast(`Round ${state.rounds.length} saved`);
+}
+
+function undoRound(){
+  const last = state.rounds.pop();
+  if (!last){ toast('No saved rounds to undo'); return; }
+  state.players.forEach(p => { if (p.id in last.pts && p.scores.length) p.scores.pop(); });
+  save();
+  toast('Last round removed');
+}
+
+$('#saveRoundBtn').addEventListener('click', saveRound);
+$('#undoRoundBtn').addEventListener('click', undoRound);
+
+/* ---------- Players ---------- */
+$('#addPlayerBtn').addEventListener('click', () => {
+  const used = new Set(state.players.map(p => p.emoji));
+  const emoji = EMOJIS.find(e => !used.has(e)) || EMOJIS[0];
+  state.players.push({ id: state.nextId++, name: `Player ${state.players.length + 1}`, emoji, scores: [] });
+  save();
+});
+
+$('#newGameBtn').addEventListener('click', (e) => armed(e.currentTarget, 'Tap again to clear scores', () => {
+  state.players.forEach(p => p.scores = []);
+  state.rounds = [];
+  photo = null; removeStore('lastCardPhoto');
+  save();
+  toast('New game started. Players kept.');
+}));
+
+$('#playersGrid').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-act]');
+  if (!btn) return;
+  const id = Number(btn.dataset.id);
+  const p = state.players.find(x => x.id === id);
+  if (!p) return;
+  if (btn.dataset.act === 'emoji'){ openEmoji(id); }
+  if (btn.dataset.act === 'remove'){
+    armed(btn, 'Remove?', () => {
+      state.players = state.players.filter(x => x.id !== id);
+      state.rounds.forEach(r => delete r.pts[id]);
+      save();
+    });
+  }
+  if (btn.dataset.act === 'delscore'){
+    p.scores.splice(Number(btn.dataset.i), 1);
+    save();
+  }
+});
+
+$('#playersGrid').addEventListener('change', (e) => {
+  if (!e.target.matches('.player-name-input')) return;
+  const p = state.players.find(x => x.id === Number(e.target.dataset.id));
+  if (!p) return;
+  p.name = e.target.value.trim() || 'Player';
+  save();
+});
+
+/* ---------- Emoji picker ---------- */
+$('#emojiPicker').innerHTML = EMOJIS.map(e => `<button class="emoji-option" data-emoji="${e}">${e}</button>`).join('');
+function openEmoji(id){ emojiFor = id; $('#emojiModal').classList.add('active'); }
+function closeEmoji(){ $('#emojiModal').classList.remove('active'); emojiFor = null; }
+$('#emojiPicker').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-emoji]');
+  if (!b) return;
+  const p = state.players.find(x => x.id === emojiFor);
+  if (p){ p.emoji = b.dataset.emoji; save(); }
+  closeEmoji();
+});
+$('#emojiClose').addEventListener('click', closeEmoji);
+$('#emojiModal').addEventListener('click', (e) => { if (e.target.id === 'emojiModal') closeEmoji(); });
+
+/* ---------- Import ---------- */
+$('#importBtn').addEventListener('click', () => {
+  const running = $('#runningTotals').checked;
+  const lines = $('#importText').value.split('\n').map(l => l.trim()).filter(Boolean);
+  const done = [], skipped = [];
+  lines.forEach(line => {
+    const m = line.match(/^(.+?)\s*[:\-–]\s*(.+)$/);
+    const nums = m ? (m[2].match(/\d+/g) || []).map(Number) : [];
+    if (!m || !nums.length){ skipped.push(line); return; }
+    const name = m[1].trim();
+    let scores = nums;
+    if (running){
+      scores = nums.map((n, i) => n - (i ? nums[i - 1] : 0));
+      if (scores.some(s => s < 0)){ skipped.push(`${name} (a running total goes down)`); return; }
+    }
+    let p = state.players.find(x => x.name.toLowerCase() === name.toLowerCase());
+    if (!p){
+      const used = new Set(state.players.map(x => x.emoji));
+      p = { id: state.nextId++, name, emoji: EMOJIS.find(e => !used.has(e)) || EMOJIS[0], scores: [] };
+      state.players.push(p);
+    }
+    p.scores = scores;
+    done.push(`${name}: ${scores.reduce((a, b) => a + b, 0)}`);
+  });
+  const status = $('#importStatus');
+  if (!done.length){
+    status.textContent = 'Nothing imported. Use one line per person, like "Shelley: 54, 56, 82".';
+    return;
+  }
+  save();
+  status.textContent = `Imported ${done.join(' · ')}` + (skipped.length ? `. Skipped: ${skipped.join('; ')}` : '');
+});
+
+/* ---------- Rendering ---------- */
+function renderStandings(){
+  const el = $('#standings');
+  if (state.players.length < 2){ el.innerHTML = ''; return; }
+  const sorted = [...state.players].sort((a, b) => state.mode === 'low' ? total(a) - total(b) : total(b) - total(a));
+  const leadTotal = total(sorted[0]);
+  el.innerHTML = sorted.map((p, i) => {
+    const gap = Math.abs(total(p) - leadTotal);
+    return `<div class="standing ${i === 0 ? 'lead' : ''}">
+      <span class="standing-pos">${i + 1}</span>
+      <span class="standing-emoji">${p.emoji}</span>
+      <span class="standing-name">${esc(p.name)}</span>
+      <span class="standing-total">${total(p)}</span>
+      <span class="standing-gap">${i === 0 ? 'leading' : `${gap} behind`}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderPlayers(elo){
+  const grid = $('#playersGrid');
+  if (!state.players.length){
+    grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🎴</div><p>No players yet. Tap <b>+ Player</b> to start.</p></div>`;
+    return;
+  }
+  grid.innerHTML = state.players.map(p => {
+    const t = total(p);
+    return `<div class="player-card">
+      <div class="player-header">
+        <button class="emoji-btn" data-act="emoji" data-id="${p.id}" aria-label="Change emoji">${p.emoji}</button>
+        <div class="player-info">
+          <label class="player-name" for="name-${p.id}">Player</label>
+          <input type="text" class="player-name-input" id="name-${p.id}" data-id="${p.id}" value="${esc(p.name)}">
+        </div>
+        <button class="remove-btn" data-act="remove" data-id="${p.id}" aria-label="Remove ${esc(p.name)}">✕</button>
+      </div>
+      <div class="stats-row">
+        <div class="stat"><div class="stat-label">Total</div><div class="stat-value">${t}</div></div>
+        <div class="stat"><div class="stat-label">ELO</div><div class="stat-value elo">${elo[p.id]}</div></div>
+        <div class="stat"><div class="stat-label">Rounds</div><div class="stat-value avg">${p.scores.length}</div></div>
+      </div>
+      ${p.scores.length ? `<div class="rounds">${p.scores.map((s, i) => `
+        <span class="round-badge">R${i + 1}: ${s}<button class="round-remove" data-act="delscore" data-id="${p.id}" data-i="${i}" aria-label="Delete round ${i + 1} score">✕</button></span>`).join('')}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderLeaderboard(){
+  const { elo } = computeElo();
+  const sorted = [...state.players].sort((a, b) => elo[b.id] - elo[a.id]);
+  const medals = ['🥇', '🥈', '🥉'];
+  $('#leaderboardContent').innerHTML = sorted.length ? `<div class="leaderboard">${sorted.map((p, i) => `
+    <div class="leaderboard-entry">
+      <div class="rank">${medals[i] || i + 1}</div>
+      <div class="player-emoji">${p.emoji}</div>
+      <div class="player-info-lb">
+        <div class="player-lb-name">${esc(p.name)}</div>
+        <div class="player-lb-stats">${total(p)} points · ${p.scores.length} rounds</div>
+      </div>
+      <div class="elo-display">${elo[p.id]}</div>
+    </div>`).join('')}</div>` : '<p class="hint">No players yet.</p>';
+}
+
+function drawEloChart(){
+  const canvas = $('#eloCanvas');
+  const container = canvas.parentElement;
+  container.querySelectorAll('.player-boat').forEach(b => b.remove());
+  const { hist } = computeElo();
+  const lines = state.players.map((p, i) => ({ p, color: LINE_COLORS[i % LINE_COLORS.length], pts: hist[p.id] })).filter(l => l.pts.length);
+  const maxR = state.rounds.length;
+  const empty = maxR === 0 || !lines.length;
+  $('#chartEmpty').hidden = !empty;
+  canvas.hidden = empty;
+
+  $('#chartLegend').innerHTML = state.players.map((p, i) => `
+    <div class="legend-item">
+      <div class="legend-color" style="background:${LINE_COLORS[i % LINE_COLORS.length]}"></div>
+      <div class="legend-text"><span class="legend-name">${p.emoji} ${esc(p.name)}</span><span class="legend-elo">${hist[p.id].length ? Math.round(hist[p.id][hist[p.id].length - 1].elo) : START_ELO}</span></div>
+    </div>`).join('');
+  if (empty) return;
+
+  const css = getComputedStyle(document.body);
+  const tok = (n) => css.getPropertyValue(n).trim();
+  const dpr = window.devicePixelRatio || 1;
+  const width = canvas.clientWidth, height = 300;
+  canvas.width = width * dpr; canvas.height = height * dpr;
+  canvas.style.height = height + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const pad = { l: 48, r: 24, t: 28, b: 32 };
+  const gw = width - pad.l - pad.r, gh = height - pad.t - pad.b;
+  let lo = Infinity, hi = -Infinity;
+  lines.forEach(l => l.pts.forEach(pt => { lo = Math.min(lo, pt.elo); hi = Math.max(hi, pt.elo); }));
+  lo = Math.floor((lo - 20) / 10) * 10; hi = Math.ceil((hi + 20) / 10) * 10;
+  const X = (r) => pad.l + (maxR ? r / maxR : 0) * gw;
+  const Y = (e) => pad.t + (1 - (e - lo) / (hi - lo)) * gh;
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.fillStyle = tok('--text-light');
+  ctx.strokeStyle = tok('--border');
+  ctx.lineWidth = 1;
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (let i = 0; i <= 4; i++){
+    const e = lo + (hi - lo) * i / 4, y = Y(e);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(width - pad.r, y); ctx.stroke();
+    ctx.fillText(Math.round(e), pad.l - 8, y);
+  }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  const step = Math.max(1, Math.ceil(maxR / 8));
+  for (let r = 0; r <= maxR; r += step) ctx.fillText(r === 0 ? 'Start' : `R${r}`, X(r), height - pad.b + 8);
+
+  lines.forEach(l => {
+    ctx.strokeStyle = l.color; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.beginPath();
+    l.pts.forEach((pt, i) => i ? ctx.lineTo(X(pt.r), Y(pt.elo)) : ctx.moveTo(X(pt.r), Y(pt.elo)));
+    ctx.stroke();
+    ctx.fillStyle = l.color;
+    l.pts.forEach(pt => { ctx.beginPath(); ctx.arc(X(pt.r), Y(pt.elo), 3.5, 0, Math.PI * 2); ctx.fill(); });
+  });
+
+  lines.forEach((l, i) => {
+    const last = l.pts[l.pts.length - 1];
+    const boat = document.createElement('div');
+    boat.className = 'player-boat boat-animation';
+    boat.textContent = l.p.emoji;
+    boat.style.left = (canvas.offsetLeft + X(last.r)) + 'px';
+    boat.style.top = (canvas.offsetTop + Y(last.elo) - 14) + 'px';
+    boat.style.animationDelay = (i * 0.3) + 's';
+    container.appendChild(boat);
+  });
+}
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if (activeTab === 'chart') drawEloChart(); }, 150);
+});
+
+function renderAll(){
+  const { elo } = computeElo();
+  document.querySelectorAll('#modeSeg button').forEach(b => b.classList.toggle('on', b.dataset.mode === state.mode));
+  renderStandings();
+  renderRoundInputs();
+  renderPlayers(elo);
+  if (activeTab === 'leaderboard') renderLeaderboard();
+  if (activeTab === 'chart') drawEloChart();
+}
+
+renderPhoto();
+renderAll();
+</script>
+<script>
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  let hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) { hadController = true; return; }
+    const busy = document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName);
+    if (!busy) location.reload();
+  });
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
+  }).catch(() => {});
+}
+</script>
+</body>
+</html>
