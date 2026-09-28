@@ -237,9 +237,20 @@
   .wm-seg button.on{background:var(--brass-bright); color:#0A2233;}
   @media(max-width:480px){ #windMap{height:320px;} }
   .wm-msg{display:flex; align-items:center; justify-content:center; height:100%; padding:16px; text-align:center; color:var(--fog); font-size:14px;}
-  .wm-slider{display:flex; align-items:center; gap:10px; margin-top:12px;}
-  .wm-slider input{flex:1; accent-color:var(--brass-bright);}
-  .wm-slider button{background:var(--navy-panel-2); color:var(--white-ish); border:1px solid rgba(159,184,200,0.25); border-radius:8px; padding:6px 10px; font:600 12px 'Inter',sans-serif; cursor:pointer;}
+  .wm-tl{position:relative; height:78px; margin-top:12px; border-radius:10px; background:rgba(10,34,51,0.55); border:1px solid rgba(159,184,200,0.15); touch-action:pan-y;}
+  .wm-tl canvas{position:absolute; left:0; top:0; width:100%; height:100%; display:block;}
+  .wm-tl input{position:absolute; inset:0; width:100%; height:100%; margin:0; background:transparent; -webkit-appearance:none; appearance:none; cursor:pointer;}
+  .wm-tl input:focus-visible{outline:2px solid var(--brass-bright); outline-offset:2px; border-radius:10px;}
+  .wm-tl input::-webkit-slider-runnable-track{height:100%; background:transparent; border:none;}
+  .wm-tl input::-moz-range-track{height:100%; background:transparent; border:none;}
+  .wm-tl input::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:16px; height:78px; border-radius:8px; background:rgba(227,169,79,0.22); border:2px solid var(--brass-bright); box-shadow:0 0 0 1px rgba(10,34,51,.6);}
+  .wm-tl input::-moz-range-thumb{width:12px; height:74px; border-radius:8px; background:rgba(227,169,79,0.22); border:2px solid var(--brass-bright);}
+  .wm-tl-foot{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-top:10px;}
+  .wm-peak{font-size:13px; color:var(--fog); line-height:1.4;}
+  .wm-peak b{color:var(--white-ish);}
+  .wm-tl-btns{display:flex; gap:6px;}
+  .wm-tl-btns button{background:var(--navy-panel-2); color:var(--white-ish); border:1px solid rgba(159,184,200,0.25); border-radius:8px; padding:7px 11px; font:600 12.5px 'Inter',sans-serif; cursor:pointer;}
+  .wm-tl-btns button.peak{border-color:rgba(232,92,80,.6);}
   .wm-legend{display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px; font-size:12px; color:var(--fog);}
   .wm-legend i{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px;}
   .wm-icon svg{position:absolute; left:0; top:0; width:44px; height:44px; filter:drop-shadow(0 1px 1px rgba(10,34,51,.6));}
@@ -621,10 +632,16 @@
         <div class="wm-when" id="wmWhen">Now</div>
       </div>
       <div id="windMap"><div class="wm-msg">Loading map…</div></div>
-      <div class="wm-slider">
-        <label for="wmTime" class="info-label" style="margin:0;white-space:nowrap;">Time</label>
-        <input type="range" id="wmTime" min="0" max="47" value="0" step="1">
-        <button type="button" id="wmNow">Now</button>
+      <div class="wm-tl" id="wmTl">
+        <canvas id="wmTlCanvas" aria-hidden="true"></canvas>
+        <input type="range" id="wmTime" min="0" max="71" value="0" step="1" aria-label="Forecast time">
+      </div>
+      <div class="wm-tl-foot">
+        <div class="wm-peak" id="wmPeak">—</div>
+        <div class="wm-tl-btns">
+          <button type="button" id="wmNow">Now</button>
+          <button type="button" id="wmPeakBtn" class="peak">⚡ Strongest</button>
+        </div>
       </div>
       <div class="wm-toggles" id="wmToggles">
         <div class="wm-seg" id="wmStyle" role="group" aria-label="Map style">
@@ -1164,7 +1181,7 @@ async function loadWindGrid(force){
   const id = ++WM.req;
   const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + pts.map(p => p[0].toFixed(3)).join(',') +
     '&longitude=' + pts.map(p => p[1].toFixed(3)).join(',') +
-    '&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&windspeed_unit=' + apiWindUnit() + '&timezone=auto&forecast_days=3';
+    '&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&windspeed_unit=' + apiWindUnit() + '&timezone=auto&forecast_days=4';
   try{
     const res = await fetch(url, { cache:'no-cache', signal: AbortSignal.timeout(12000) });
     if(!res.ok) throw new Error('HTTP ' + res.status);
@@ -1386,6 +1403,81 @@ function arrowSvg(dir, color, home){
   return `<svg viewBox="0 0 44 44" style="transform:rotate(${rot}deg)"><path d="M22 4 L31 18 L25 17 L25 38 L19 38 L19 17 L13 18 Z" fill="${color}" stroke="#0A2233" stroke-width="${home ? 2 : 1.5}" stroke-linejoin="round"/></svg>`;
 }
 
+const WM_DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const WM_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function wmDate(t, short){
+  const d = new Date(wallClockToMs(t));
+  const hh = String(d.getUTCHours()).padStart(2, '0') + ':00';
+  return short ? WM_DAYS[d.getUTCDay()] + ' ' + hh : WM_DAYS[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + WM_MONTHS[d.getUTCMonth()] + ', ' + hh;
+}
+function wmRel(off){
+  if (off === 0) return 'now';
+  if (off < 24) return 'in ' + off + 'h';
+  const days = Math.floor(off / 24), h = off % 24;
+  return 'in ' + days + (days === 1 ? ' day' : ' days') + (h ? ' ' + h + 'h' : '');
+}
+
+/* Timeline under the map: one bar per hour for your spot, day markers, and the strongest hour. */
+function wmSeries(){
+  const h = WM.data[0].h, nowI = nearestHourIndex(h.time);
+  const max = Math.min(71, h.time.length - 1 - nowI);
+  const out = [];
+  for (let k = 0; k <= max; k++) out.push({ t: h.time[nowI + k], sp: h.wind_speed_10m[nowI + k], gust: h.wind_gusts_10m ? h.wind_gusts_10m[nowI + k] : null });
+  return out;
+}
+function wmPeak(series){
+  let best = -1;
+  series.forEach((p, k) => { if (p.sp != null && (best < 0 || p.sp > series[best].sp)) best = k; });
+  return best;
+}
+function drawTimeline(){
+  const canvas = document.getElementById('wmTlCanvas');
+  const box = document.getElementById('wmTl');
+  const W = box.clientWidth, H = box.clientHeight;
+  if (!W || !WM.data) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  const series = wmSeries();
+  const n = series.length;
+  if (!n) return;
+  const thumb = 16, x = k => thumb / 2 + (n > 1 ? k / (n - 1) : 0) * (W - thumb);
+  const top = 16, bottom = H - 18;
+  const vmax = Math.max(1, ...series.map(p => Math.max(p.sp || 0, p.gust || 0)));
+  const y = v => bottom - (v / vmax) * (bottom - top);
+  const bw = Math.max(1.5, (W - thumb) / Math.max(1, n - 1) - 1);
+
+  ctx.font = "600 10px 'IBM Plex Mono', monospace";
+  ctx.textBaseline = 'alphabetic';
+  series.forEach((p, k) => {
+    const d = new Date(wallClockToMs(p.t));
+    if (k > 0 && d.getUTCHours() === 0) {
+      ctx.strokeStyle = 'rgba(159,184,200,0.25)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(Math.round(x(k)) + 0.5, 4); ctx.lineTo(Math.round(x(k)) + 0.5, H - 4); ctx.stroke();
+    }
+    if ((k === 0 || d.getUTCHours() === 0) && x(k) < W - 44) {
+      ctx.fillStyle = '#9FB8C8'; ctx.textAlign = 'left';
+      ctx.fillText(k === 0 ? 'Now' : WM_DAYS[d.getUTCDay()] + ' ' + d.getUTCDate(), x(k) + (k === 0 ? -thumb / 2 + 6 : 4), H - 5);
+    }
+    if (p.gust != null) { ctx.fillStyle = 'rgba(159,184,200,0.18)'; ctx.fillRect(x(k) - bw / 2, y(p.gust), bw, bottom - y(p.gust)); }
+    if (p.sp != null) { ctx.fillStyle = windColor(p.sp); ctx.fillRect(x(k) - bw / 2, y(p.sp), bw, bottom - y(p.sp)); }
+  });
+
+  const pk = wmPeak(series);
+  const u = unitLabel(state.windUnit);
+  const peakEl = document.getElementById('wmPeak');
+  if (pk >= 0) {
+    const p = series[pk];
+    ctx.fillStyle = '#FF6054'; ctx.textAlign = 'center'; ctx.font = "700 11px 'Inter', sans-serif";
+    ctx.fillText('⚡' + Math.round(p.sp), Math.min(W - 14, Math.max(14, x(pk))), Math.max(12, y(p.sp) - 3));
+    peakEl.innerHTML = `Strongest: <b>${wmDate(p.t)}</b> · ${Math.round(p.sp)} ${u}${p.gust != null ? `, gusts ${Math.round(p.gust)}` : ''} from ${compassPoint(WM.data[0].h.wind_direction_10m[nearestHourIndex(WM.data[0].h.time) + pk])}`;
+    document.getElementById('wmPeakBtn').dataset.k = pk;
+  } else peakEl.textContent = '—';
+}
+new ResizeObserver(() => { if (WM.data) drawTimeline(); }).observe(document.getElementById('wmTl'));
+
 function drawWindMap(){
   if(!WM.data || !WM.data.length || !WM.data[0].h) return;
   const times = WM.data[0].h.time;
@@ -1393,11 +1485,11 @@ function drawWindMap(){
   const i = Math.min(times.length - 1, nowI + WM.offset);
   WM.hourIdx = i;
   const slider = document.getElementById('wmTime');
-  slider.max = Math.max(0, Math.min(47, times.length - 1 - nowI));
-  const d = new Date(wallClockToMs(times[i]));
-  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const label = days[d.getUTCDay()] + ' ' + String(d.getUTCHours()).padStart(2,'0') + ':00';
-  document.getElementById('wmWhen').textContent = WM.offset === 0 ? 'Now · ' + label : '+' + WM.offset + 'h · ' + label;
+  slider.max = Math.max(0, Math.min(71, times.length - 1 - nowI));
+  if (Number(slider.value) !== WM.offset) slider.value = WM.offset;
+  document.getElementById('wmWhen').textContent = wmDate(times[i]) + ' · ' + wmRel(WM.offset);
+  slider.setAttribute('aria-valuetext', wmDate(times[i]) + ', ' + wmRel(WM.offset));
+  drawTimeline();
 
   WM.layer.clearLayers();
   const u = unitLabel(state.windUnit);
@@ -1439,6 +1531,11 @@ function renderShelter(dir, sp, gust){
 
 document.getElementById('wmTime').addEventListener('input', e => { WM.offset = Number(e.target.value); drawWindMap(); });
 document.getElementById('wmNow').addEventListener('click', () => { WM.offset = 0; document.getElementById('wmTime').value = 0; drawWindMap(); });
+document.getElementById('wmPeakBtn').addEventListener('click', e => {
+  const k = Number(e.currentTarget.dataset.k);
+  if (!Number.isFinite(k)) return;
+  WM.offset = k; document.getElementById('wmTime').value = k; drawWindMap();
+});
 document.querySelectorAll('#wmToggles input').forEach(inp => inp.addEventListener('change', () => {
   WM.show[inp.dataset.layer] = inp.checked;
   if(!WM.map) return;
