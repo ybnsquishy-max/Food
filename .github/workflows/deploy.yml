@@ -1,4 +1,4 @@
-name: Deploy Apps (Mise + Surge + Last Card)
+name: Deploy Apps (Mise + Surge)
 
 on:
   push:
@@ -34,7 +34,7 @@ jobs:
           mkdir -p _site/wind-tide
           cp -r wind-tide/. _site/wind-tide/
           sed -i "s/__BUILD__/${BUILD}/g" _site/wind-tide/sw.js _site/wind-tide/index.html
-          # Deploy Last Card
+          # Last Card moved to kitchen-apps; this folder only redirects there
           mkdir -p _site/last-card
           cp -r last-card/. _site/last-card/
           sed -i "s/__BUILD__/${BUILD}/g" _site/last-card/sw.js
